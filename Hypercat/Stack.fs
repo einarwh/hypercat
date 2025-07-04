@@ -2,7 +2,14 @@ module Stack
 
 open System
 
-type StackItem = NumItem of int | BoolItem of bool | BlockItem of Stack
+// Maybe have two kinds of stack items, value and block?
+// value in turn is num, bool or name (maybe string later)
+// Maybe easier to drive externally.
+// Just push simple values. Everything else is lookup?
+// Whenever a new value is pushed, it is evaluated. Num, bool and string evaluate to themselves. 
+// Names evaluate through lookup and evaluation of the corresponding procedure.
+
+type StackItem = NumItem of int | BoolItem of bool | NameItem of string | BlockItem of Stack
 and Stack = StackItem list
 
 let top (stack : Stack) : StackItem = 
@@ -101,4 +108,5 @@ let exec stack =
         | NumItem n -> tos :: rest 
         | BoolItem b -> tos :: rest 
         | BlockItem block -> tos :: rest
+        | NameItem name -> tos :: rest
     | _ -> failwith "stack underflow in exec"
