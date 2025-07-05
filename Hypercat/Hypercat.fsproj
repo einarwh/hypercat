@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <Compile Include="Stack.fs" />
+    <Compile Include="Cat.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
