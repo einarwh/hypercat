@@ -8,6 +8,10 @@ open System
 // Just push simple values. Everything else is lookup?
 // Whenever a new value is pushed, it is evaluated. Num, bool and string evaluate to themselves. 
 // Names evaluate through lookup and evaluation of the corresponding procedure.
+// Distinguish between things that execute/reduce and things that don't?
+// On execution/reduction, 302 FOUND redirect to reduced stack.
+// On non-execution/reduction, 200 OK to non-reduced stack.
+// How to distinguish and where?
 
 type StackItem = NumItem of int | BoolItem of bool | NameItem of string | BlockItem of Stack
 and Stack = StackItem list

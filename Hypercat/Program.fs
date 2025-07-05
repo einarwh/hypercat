@@ -4,16 +4,25 @@ open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.Hosting
 open Microsoft.AspNetCore.Http
 
-// let toItemList (pathElements : string list) : StackItem list = 
-//     match pathElements with 
-//     | h :: t -> 
+type Item = SimpleItem of string | CompositeItem of Item list
 
-//         if h = "begin" then 
-
-//     let rec fn elements acc = 
-//         match elements with 
-//         | 
-
+let rec toItemList (stack : Item list list, current : Item list) (elements : string list) : (Item list list * Item list) = 
+    match elements with 
+    | [] ->
+        (stack, List.rev current)
+    | h :: t when h = "begin" ->
+        // Start new block
+        toItemList (current :: stack, []) t
+    | h :: t when h = "end" -> 
+        // Finish current block 
+        match stack with 
+        | headStack :: restStack -> 
+            toItemList (restStack, (CompositeItem (List.rev current)) :: headStack) t
+        | _ -> failwith "unexpected end"
+    | h :: t -> 
+        // Add to current block 
+        toItemList (stack, (SimpleItem h) :: current) t
+        
 let getHandler (ctx : HttpContext) : Task = 
     let routePath = ctx.Request.RouteValues["path"] :?> string
     let nonNullPath = if routePath = null then "" else routePath
@@ -21,6 +30,8 @@ let getHandler (ctx : HttpContext) : Task =
     try 
         printfn "%A" pathElements
         let result = "fojsfkj"
+        let items = toItemList ([], []) pathElements
+        printfn "ITEMS %A" items
         // let result = run pathElements
         ctx.Response.WriteAsync(result)
     with 
