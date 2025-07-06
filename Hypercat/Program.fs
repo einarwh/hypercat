@@ -61,6 +61,8 @@ let rec toUrl (elements : string list) (items : CatItem list) : string =
         | BoolItem b ->
             let s = if b then "true" else "false"
             toUrl (s :: elements) rest 
+        | NameItem name ->
+            toUrl (name :: elements) rest 
         | ProcItem procItems -> 
             let s = "begin" + "/" + toUrl [] procItems + "/" + "end"
             toUrl (s :: elements) rest 
@@ -80,6 +82,9 @@ let rec applyInputs (stack : Cat) (inputs : Input list)  =
             (Reduction st, rest)
         | Extension st -> 
             applyInputs st rest
+        | Execution (st, procInputs) -> 
+            printfn "procInputs: %A" procInputs
+            applyInputs st (procInputs @ rest)
 
 let toLocationUrl (st : Cat) (inputsLeft : Input list) = 
     match inputsLeft with 

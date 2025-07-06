@@ -4,10 +4,10 @@ open System
 
 type Input = IntInput of int | BoolInput of bool | NameInput of string
 
-type CatItem = IntItem of int | BoolItem of bool | ProcItem of Cat | UnfinishedProcItem of Cat 
+type CatItem = IntItem of int | BoolItem of bool | ProcItem of Cat | NameItem of string | UnfinishedProcItem of Cat 
 and Cat = CatItem list
 
-type PushResult = Reduction of Cat | Extension of Cat 
+type PushResult = Reduction of Cat | Extension of Cat | Execution of Cat * Input list 
 
 let swap (stack : Cat) : Cat = 
     match stack with 
@@ -54,12 +54,38 @@ let lookupProc name =
     | Some (n, op) -> op 
     | None -> failwith <| sprintf "Unknown operation %s" name
 
+let rec isInsideUnfinishedProc (stack : Cat) = 
+    match stack with 
+    | [] -> false 
+    | UnfinishedProcItem _ :: _ -> true 
+    | h :: rest -> isInsideUnfinishedProc rest
+
+let extend (it : CatItem) (stack : Cat) : PushResult = 
+    match stack with 
+    | UnfinishedProcItem unfinished :: rest -> 
+        Extension (UnfinishedProcItem (it :: unfinished) :: rest)
+    | _ -> 
+        Extension (it :: stack)
+
+let rec toInputs (inputs : Input list) (items : CatItem list) : Input list = 
+    match items with 
+    | [] -> inputs // Rev?
+    | it :: rest -> 
+        match it with 
+        | IntItem n -> toInputs (IntInput n :: inputs) rest
+        | BoolItem b -> toInputs (BoolInput b :: inputs) rest
+        | NameItem name -> toInputs (NameInput name :: inputs) rest 
+        | ProcItem procItems -> 
+            let procInputs = [ NameInput "begin" ] @ toInputs [] procItems @ [ NameInput "end" ]
+            toInputs (procInputs @ inputs) rest 
+        | UnfinishedProcItem procItems -> 
+            let procInputs = [ NameInput "begin" ] @ toInputs [] procItems
+            toInputs (procInputs @ inputs) rest 
+
 let pushInput (e : Input) (stack : Cat) : PushResult =
     match e with 
-    | IntInput n -> 
-        Extension (IntItem n :: stack)
-    | BoolInput b -> 
-        Extension (BoolItem b :: stack)
+    | IntInput n -> extend (IntItem n) stack 
+    | BoolInput b -> extend (BoolItem b) stack 
     | NameInput name when name = "begin" -> 
         printfn "begin!"
         Extension (UnfinishedProcItem [] :: stack)
@@ -69,8 +95,17 @@ let pushInput (e : Input) (stack : Cat) : PushResult =
         | UnfinishedProcItem prc :: rest -> 
             Extension (ProcItem prc :: rest)
         | _ -> failwith "unexpected end!"
+    | NameInput name when name = "exec" -> 
+        printfn "exec!"
+        match stack with 
+        | ProcItem prc :: rest -> 
+            Execution (rest, toInputs [] prc)
+        | _ -> failwith "unexpected end!"
     | NameInput name -> 
-        // Lookup
-        let op = lookupProc name 
-        Reduction (op stack)
+        if isInsideUnfinishedProc stack then 
+            extend (NameItem name) stack 
+        else 
+            // Lookup
+            let op = lookupProc name 
+            Reduction (op stack)
 
