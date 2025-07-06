@@ -7,23 +7,6 @@ open Cat
 
 type Item = SimpleItem of string | CompositeItem of Item list
 
-let rec toItemList (stack : Item list list, current : Item list) (elements : string list) : (Item list list * Item list) = 
-    match elements with 
-    | [] ->
-        (stack, List.rev current)
-    | h :: t when h = "begin" ->
-        // Start new block
-        toItemList (current :: stack, []) t
-    | h :: t when h = "end" -> 
-        // Finish current block 
-        match stack with 
-        | headStack :: restStack -> 
-            toItemList (restStack, (CompositeItem (List.rev current)) :: headStack) t
-        | _ -> failwith "unexpected end"
-    | h :: t -> 
-        // Add to current block 
-        toItemList (stack, (SimpleItem h) :: current) t
-
 let toInput (element : string) : Input = 
     match System.Int32.TryParse element with
     | true, n -> IntInput n 
