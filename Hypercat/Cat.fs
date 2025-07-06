@@ -54,13 +54,6 @@ let lookupProc name =
     | Some (n, op) -> op 
     | None -> failwith <| sprintf "Unknown operation %s" name
 
-// // TODO: Doesn't really make sense? Unfinished proc must always be on top.
-// let rec isInsideUnfinishedProc (stack : Cat) = 
-//     match stack with 
-//     | [] -> false 
-//     | UnfinishedProcItem _ :: _ -> true 
-//     | h :: rest -> isInsideUnfinishedProc rest
-
 let isInsideUnfinishedProc (stack : Cat) = 
     match stack with 
     | UnfinishedProcItem _ :: _ -> true 
