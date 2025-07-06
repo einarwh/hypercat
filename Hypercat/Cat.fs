@@ -20,6 +20,19 @@ and Cat = CatItem list
 
 type PushResult = Reduction of Cat | Extension of Cat 
 
+let swap (stack : Cat) : Cat = 
+    match stack with 
+    | a :: b :: rest -> b :: a :: rest 
+    | _ -> failwith "stack underflow in swap"
+
+let procs : (string * (Cat -> Cat)) list = 
+    [ ("swap", swap) ]
+
+let lookupProc name = 
+    match procs |> List.tryFind (fun (n, op) -> n = name) with
+    | Some (n, op) -> op 
+    | None -> failwith <| sprintf "Unknown operation %s" name
+
 let push (e : Input) (stack : Cat) : PushResult =
     match e with 
     | IntInput n -> 
@@ -37,5 +50,6 @@ let push (e : Input) (stack : Cat) : PushResult =
         | _ -> failwith "unexpected end!"
     | NameInput name -> 
         // Lookup
-        Extension stack
+        let op = lookupProc name 
+        Reduction (op stack)
 
