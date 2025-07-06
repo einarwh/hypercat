@@ -25,8 +25,29 @@ let swap (stack : Cat) : Cat =
     | a :: b :: rest -> b :: a :: rest 
     | _ -> failwith "stack underflow in swap"
 
+let add (stack : Cat) : Cat = 
+    match stack with 
+    | a :: b :: rest -> 
+        match (a, b) with 
+        | IntItem n1, IntItem n2 -> IntItem (n2 + n1) :: rest
+        | _ -> failwith "type error in add"
+    | _ -> failwith "stack underflow in add"
+
+let dup (stack : Cat) : Cat = 
+    match stack with 
+    | a :: rest -> a :: a :: rest 
+    | _ -> failwith "stack underflow in dup"
+
+let pop (stack : Cat) : Cat = 
+    match stack with 
+    | a :: rest -> rest 
+    | _ -> failwith "stack underflow in pop"
+
 let procs : (string * (Cat -> Cat)) list = 
-    [ ("swap", swap) ]
+    [ ("swap", swap)
+      ("dup", dup)
+      ("pop", pop)
+      ("add", add) ]
 
 let lookupProc name = 
     match procs |> List.tryFind (fun (n, op) -> n = name) with
