@@ -84,12 +84,16 @@ let rec applyInputs (stack : Cat) (inputs : Input list)  =
             applyInputs st rest
         | Execution (st, procInputs) -> 
             printfn "procInputs: %A" procInputs
-            applyInputs st (procInputs @ rest)
+            (Reduction st, (procInputs @ rest))
 
 let toLocationUrl (st : Cat) (inputsLeft : Input list) = 
-    match inputsLeft with 
-    | [] -> 
+    match (st, inputsLeft) with 
+    | ([], []) -> "/"
+    | (_, []) -> 
         let url = st |> toUrl []
+        "/" + url
+    | ([], _) -> 
+        let url = inputsLeft |> toElementList |> List.reduce (fun s1 s2 -> s1 + "/" + s2)
         "/" + url
     | _ -> 
         let urlPart1 = st |> toUrl []
