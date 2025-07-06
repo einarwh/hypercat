@@ -9,6 +9,16 @@ and Cat = CatItem list
 
 type PushResult = Reduction of Cat | Extension of Cat | Execution of Cat * Input list 
 
+type ItemType = IntType | BoolType | ProcType | NameType | UnfinishedProcType | AnyType
+
+type Effect = Removed of int | Added of ItemType
+
+type Op = 
+    { op: Cat -> Cat 
+      args : ItemType list }
+
+let nop (stack: Cat) : Cat = stack
+
 let swap (stack : Cat) : Cat = 
     match stack with 
     | a :: b :: rest -> b :: a :: rest 
@@ -35,23 +45,130 @@ let add (stack : Cat) : Cat =
         | _ -> failwith "type error in add"
     | _ -> failwith "stack underflow in add"
 
+let mul (stack : Cat) : Cat = 
+    match stack with 
+    | a :: b :: rest -> 
+        match (a, b) with 
+        | IntItem n1, IntItem n2 -> IntItem (n2 * n1) :: rest
+        | _ -> failwith "type error in mul"
+    | _ -> failwith "stack underflow in mul"
+
+let eq (stack : Cat) : Cat = 
+    match stack with 
+    | a :: b :: rest -> 
+        match (a, b) with 
+        | IntItem n1, IntItem n2 -> BoolItem (n2 = n1) :: rest
+        | BoolItem b1, BoolItem b2 -> BoolItem (b2 = b1) :: rest
+        | _ -> failwith "type error in eq"
+    | _ -> failwith "stack underflow in eq"
+
+let ne (stack : Cat) : Cat = 
+    match stack with 
+    | a :: b :: rest -> 
+        match (a, b) with 
+        | IntItem n1, IntItem n2 -> BoolItem (n2 <> n1) :: rest
+        | BoolItem b1, BoolItem b2 -> BoolItem (b2 <> b1) :: rest
+        | _ -> failwith "type error in ne"
+    | _ -> failwith "stack underflow in ne"
+
+let gt (stack : Cat) : Cat = 
+    match stack with 
+    | a :: b :: rest -> 
+        match (a, b) with 
+        | IntItem n1, IntItem n2 -> BoolItem (n2 > n1) :: rest
+        | _ -> failwith "type error in gt"
+    | _ -> failwith "stack underflow in gt"
+
+let lt (stack : Cat) : Cat = 
+    match stack with 
+    | a :: b :: rest -> 
+        match (a, b) with 
+        | IntItem n1, IntItem n2 -> BoolItem (n2 < n1) :: rest
+        | _ -> failwith "type error in lt"
+    | _ -> failwith "stack underflow in lt"
+
+let notOp (stack : Cat) : Cat = 
+    match stack with 
+    | a :: rest -> 
+        match a with 
+        | BoolItem b -> BoolItem (not b) :: rest
+        | _ -> failwith "type error in not"
+    | _ -> failwith "stack underflow in not"
+
+let andOp (stack : Cat) : Cat = 
+    match stack with 
+    | a :: b :: rest -> 
+        match (a, b) with 
+        | BoolItem b1, BoolItem b2 -> BoolItem (b2 && b1) :: rest
+        | _ -> failwith "type error in and"
+    | _ -> failwith "stack underflow in and"
+
+let orOp (stack : Cat) : Cat = 
+    match stack with 
+    | a :: b :: rest -> 
+        match (a, b) with 
+        | BoolItem b1, BoolItem b2 -> BoolItem (b2 || b1) :: rest
+        | _ -> failwith "type error in or"
+    | _ -> failwith "stack underflow in or"
+
+let trueOp (stack : Cat) : Cat = 
+    stack |> push (BoolItem true) 
+
+let falseOp (stack : Cat) : Cat = 
+    stack |> push (BoolItem false) 
+
+let zero (stack : Cat) : Cat = 
+    stack |> push (IntItem 0) 
+
 let succ (stack : Cat) : Cat = 
     stack |> push (IntItem 1) |> add
 
 let pred (stack : Cat) : Cat = 
     stack |> push (IntItem -1) |> add
 
-let procs : (string * (Cat -> Cat)) list = 
-    [ ("swap", swap)
-      ("dup", dup)
-      ("pop", pop)
-      ("add", add)
-      ("succ", succ)
-      ("pred", pred) ]
+let ops : (string * Op) list = 
+    [ ("swap", { op = swap; args = [AnyType; AnyType] })
+      ("dup", { op = dup; args = [AnyType] })
+      ("pop", { op = pop; args = [AnyType] })
+      ("add", { op = add; args = [IntType; IntType] })
+      ("mul", { op = mul; args = [IntType; IntType] })
+      ("true", { op = trueOp; args = [] })
+      ("false", { op = falseOp; args = [] })
+      ("zero", { op = zero; args = [] })
+      ("succ", { op = succ; args = [IntType] })
+      ("pred", { op = pred; args = [IntType] })
+      ("eq", { op = eq; args = [AnyType; AnyType] })
+      ("ne", { op = ne; args = [AnyType; AnyType] })
+      ("gt", { op = gt; args = [AnyType; AnyType] })
+      ("lt", { op = lt; args = [AnyType; AnyType] })
+      ("not", { op = notOp; args = [BoolType] })
+      ("and", { op = andOp; args = [BoolType; BoolType] })
+      ("or", { op = orOp; args = [BoolType; BoolType] })
+      ("exec", { op = nop; args = [ProcType] })
+      ("if", { op = nop; args = [ProcType; BoolType]; })
+      ("ifelse", { op = nop; args = [ProcType; ProcType; BoolType] })
+    ]
+
+let rec matchArgs (args : ItemType list) (stack : Cat) = 
+    match args, stack with 
+    | [], _ -> true 
+    | _, [] -> false 
+    | a :: restArgs, it :: restStack -> 
+        match (a, it) with 
+        | AnyType, _ -> matchArgs restArgs restStack 
+        | IntType, IntItem _ -> matchArgs restArgs restStack 
+        | BoolType, BoolItem _ -> matchArgs restArgs restStack 
+        | NameType, NameItem _ -> matchArgs restArgs restStack 
+        | ProcType, ProcItem _ -> matchArgs restArgs restStack 
+        | UnfinishedProcType, UnfinishedProcItem _ -> matchArgs restArgs restStack 
+        | _ -> false
+
+let legalOps (stack : Cat) : string list = 
+    ops |> List.choose (fun (name, op) -> if matchArgs op.args stack then Some name else None)
 
 let lookupProc name = 
-    match procs |> List.tryFind (fun (n, op) -> n = name) with
-    | Some (n, op) -> op 
+    match ops |> List.tryFind (fun (n, op) -> n = name) with
+    | Some (n, op) -> op.op
     | None -> failwith <| sprintf "Unknown operation %s" name
 
 let isInsideUnfinishedProc (stack : Cat) = 
@@ -113,7 +230,33 @@ let pushInput (e : Input) (stack : Cat) : PushResult =
             match stack with 
             | ProcItem prc :: rest -> 
                 Execution (rest, toInputs [] prc)
-            | _ -> failwith "unexpected end!"
+            | _ -> failwith "type error in exec"
+    | NameInput name when name = "if" -> 
+        printfn "if!"
+        if isInsideUnfinishedProc stack then 
+            extend (NameItem name) stack 
+        else 
+            match stack with 
+            | a :: b :: rest -> 
+                match (a, b) with 
+                | ProcItem prc, BoolItem b -> 
+                    if b then Execution (rest, toInputs [] prc)
+                    else Execution (rest, [])
+                | _ -> failwith "type error in if" 
+            | _ -> failwith "stack underflow in if"
+    | NameInput name when name = "ifelse" -> 
+        printfn "ifelse!"
+        if isInsideUnfinishedProc stack then 
+            extend (NameItem name) stack 
+        else 
+            match stack with 
+            | a :: b :: c :: rest -> 
+                match (a, b, c) with 
+                | ProcItem elseProc, ProcItem ifProc, BoolItem b -> 
+                    if b then Execution (rest, toInputs [] ifProc)
+                    else Execution (rest, toInputs [] elseProc)
+                | _ -> failwith "type error in ifelse" 
+            | _ -> failwith "stack underflow in ifelse"
     | NameInput name -> 
         if isInsideUnfinishedProc stack then 
             extend (NameItem name) stack 
@@ -121,4 +264,3 @@ let pushInput (e : Input) (stack : Cat) : PushResult =
             // Lookup
             let op = lookupProc name 
             Reduction (op stack)
-

@@ -1,4 +1,5 @@
 open System
+open System.IO
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.Hosting
@@ -6,6 +7,11 @@ open Microsoft.AspNetCore.Http
 open Cat
 
 type Item = SimpleItem of string | CompositeItem of Item list
+
+let createOplink (url : string) name = 
+    let href = Path.Combine(url, name)
+    let result = sprintf "<a href=\"%s\">%s</a>" href name
+    result
 
 let toInput (element : string) : Input = 
     match System.Int32.TryParse element with
@@ -101,8 +107,21 @@ let getHandler (ctx : HttpContext) : Task =
             ctx.Response.Headers.Location <- url
             Task.CompletedTask
         | (Extension st, []) -> 
+            let legal = legalOps st
+            printfn "LEGAL OPS %A" legal
+            let url = toLocationUrl st []
+            printfn "URL %A" url
+            let linkItems = 
+                legal 
+                |> List.map (fun opName -> createOplink url opName) 
+                |> List.map (fun link -> sprintf "<li>%s</li>" link)
+                |> List.reduce (fun ul1 ul2 -> ul1 + ul2)
+            let linkList : string = sprintf "<ul>%s</ul>" linkItems
+            printfn "%A" linkList
+            let body = sprintf "<body>%s</body>" linkList
+
             ctx.Response.StatusCode <- 200
-            ctx.Response.WriteAsync(sprintf "%A" st)
+            ctx.Response.WriteAsync(body)
         | _ -> 
             failwith "?"
     with 
