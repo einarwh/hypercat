@@ -76,7 +76,7 @@ let rec applyInputs (stack : Cat) (inputs : Input list)  =
     | [] -> (Extension stack, [])
     | h :: rest -> 
         let result = pushInput h stack 
-        printfn "RESULT: %A" result
+        printfn "RESULT: %A\n" result
         match result with 
         | Reduction st -> 
             (Reduction st, rest)

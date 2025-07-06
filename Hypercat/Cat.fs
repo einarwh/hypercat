@@ -60,12 +60,14 @@ let rec isInsideUnfinishedProc (stack : Cat) =
     | UnfinishedProcItem _ :: _ -> true 
     | h :: rest -> isInsideUnfinishedProc rest
 
-let extend (it : CatItem) (stack : Cat) : PushResult = 
+let rec extendDown (it : CatItem) (stack : Cat) : Cat = 
     match stack with 
-    | UnfinishedProcItem unfinished :: rest -> 
-        Extension (UnfinishedProcItem (it :: unfinished) :: rest)
-    | _ -> 
-        Extension (it :: stack)
+    | (UnfinishedProcItem unfinished) :: rest -> 
+        (UnfinishedProcItem (extendDown it unfinished)) :: rest
+    | _ -> it :: stack
+
+let extend (it : CatItem) (stack : Cat) : PushResult = 
+    Extension (extendDown it stack)
 
 let rec toInputs (inputs : Input list) (items : CatItem list) : Input list = 
     match items with 
@@ -82,25 +84,37 @@ let rec toInputs (inputs : Input list) (items : CatItem list) : Input list =
             let procInputs = [ NameInput "begin" ] @ toInputs [] procItems
             toInputs (procInputs @ inputs) rest 
 
+let rec endProc (item : CatItem) : CatItem = 
+    match item with 
+    | UnfinishedProcItem prc -> 
+        match prc with 
+        | (UnfinishedProcItem innerPrc) :: rest -> 
+            UnfinishedProcItem ((endProc (UnfinishedProcItem innerPrc)) :: rest)
+        | _ -> ProcItem prc 
+    | _ -> failwith "must be unfinished proc"
+
 let pushInput (e : Input) (stack : Cat) : PushResult =
     match e with 
     | IntInput n -> extend (IntItem n) stack 
     | BoolInput b -> extend (BoolItem b) stack 
     | NameInput name when name = "begin" -> 
         printfn "begin!"
-        Extension (UnfinishedProcItem [] :: stack)
+        extend (UnfinishedProcItem []) stack
     | NameInput name when name = "end" -> 
         printfn "end!"
         match stack with 
         | UnfinishedProcItem prc :: rest -> 
-            Extension (ProcItem prc :: rest)
+            Extension (endProc (UnfinishedProcItem prc) :: rest)
         | _ -> failwith "unexpected end!"
     | NameInput name when name = "exec" -> 
         printfn "exec!"
-        match stack with 
-        | ProcItem prc :: rest -> 
-            Execution (rest, toInputs [] prc)
-        | _ -> failwith "unexpected end!"
+        if isInsideUnfinishedProc stack then 
+            extend (NameItem name) stack 
+        else 
+            match stack with 
+            | ProcItem prc :: rest -> 
+                Execution (rest, toInputs [] prc)
+            | _ -> failwith "unexpected end!"
     | NameInput name -> 
         if isInsideUnfinishedProc stack then 
             extend (NameItem name) stack 
