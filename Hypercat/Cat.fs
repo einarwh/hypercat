@@ -2,17 +2,6 @@ module Cat
 
 open System
 
-// Maybe have two kinds of stack items, value and block?
-// value in turn is num, bool or name (maybe string later)
-// Maybe easier to drive externally.
-// Just push simple values. Everything else is lookup?
-// Whenever a new value is pushed, it is evaluated. Num, bool and string evaluate to themselves. 
-// Names evaluate through lookup and evaluation of the corresponding procedure.
-// Distinguish between things that execute/reduce and things that don't?
-// On execution/reduction, 302 FOUND redirect to reduced stack.
-// On non-execution/reduction, 200 OK to non-reduced stack.
-// How to distinguish and where?
-
 type Input = IntInput of int | BoolInput of bool | NameInput of string
 
 type CatItem = IntItem of int | BoolItem of bool | ProcItem of Cat | UnfinishedProcItem of Cat 
@@ -25,14 +14,6 @@ let swap (stack : Cat) : Cat =
     | a :: b :: rest -> b :: a :: rest 
     | _ -> failwith "stack underflow in swap"
 
-let add (stack : Cat) : Cat = 
-    match stack with 
-    | a :: b :: rest -> 
-        match (a, b) with 
-        | IntItem n1, IntItem n2 -> IntItem (n2 + n1) :: rest
-        | _ -> failwith "type error in add"
-    | _ -> failwith "stack underflow in add"
-
 let dup (stack : Cat) : Cat = 
     match stack with 
     | a :: rest -> a :: a :: rest 
@@ -43,18 +24,37 @@ let pop (stack : Cat) : Cat =
     | a :: rest -> rest 
     | _ -> failwith "stack underflow in pop"
 
+let push (e : CatItem) (stack : Cat) : Cat =
+    e :: stack
+
+let add (stack : Cat) : Cat = 
+    match stack with 
+    | a :: b :: rest -> 
+        match (a, b) with 
+        | IntItem n1, IntItem n2 -> IntItem (n2 + n1) :: rest
+        | _ -> failwith "type error in add"
+    | _ -> failwith "stack underflow in add"
+
+let succ (stack : Cat) : Cat = 
+    stack |> push (IntItem 1) |> add
+
+let pred (stack : Cat) : Cat = 
+    stack |> push (IntItem -1) |> add
+
 let procs : (string * (Cat -> Cat)) list = 
     [ ("swap", swap)
       ("dup", dup)
       ("pop", pop)
-      ("add", add) ]
+      ("add", add)
+      ("succ", succ)
+      ("pred", pred) ]
 
 let lookupProc name = 
     match procs |> List.tryFind (fun (n, op) -> n = name) with
     | Some (n, op) -> op 
     | None -> failwith <| sprintf "Unknown operation %s" name
 
-let push (e : Input) (stack : Cat) : PushResult =
+let pushInput (e : Input) (stack : Cat) : PushResult =
     match e with 
     | IntInput n -> 
         Extension (IntItem n :: stack)
