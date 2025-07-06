@@ -15,7 +15,8 @@ type Effect = Removed of int | Added of ItemType
 
 type Op = 
     { op: Cat -> Cat 
-      args : ItemType list }
+      args : ItemType list
+      precond : Cat -> bool }
 
 let nop (stack: Cat) : Cat = stack
 
@@ -45,6 +46,14 @@ let add (stack : Cat) : Cat =
         | _ -> failwith "type error in add"
     | _ -> failwith "stack underflow in add"
 
+let sub (stack : Cat) : Cat = 
+    match stack with 
+    | a :: b :: rest -> 
+        match (a, b) with 
+        | IntItem n1, IntItem n2 -> IntItem (n2 - n1) :: rest
+        | _ -> failwith "type error in sub"
+    | _ -> failwith "stack underflow in sub"
+
 let mul (stack : Cat) : Cat = 
     match stack with 
     | a :: b :: rest -> 
@@ -52,6 +61,14 @@ let mul (stack : Cat) : Cat =
         | IntItem n1, IntItem n2 -> IntItem (n2 * n1) :: rest
         | _ -> failwith "type error in mul"
     | _ -> failwith "stack underflow in mul"
+
+let neg (stack : Cat) : Cat = 
+    match stack with 
+    | a :: rest -> 
+        match a with 
+        | IntItem n -> IntItem (- n) :: rest
+        | _ -> failwith "type error in neg"
+    | _ -> failwith "stack underflow in neg"
 
 let eq (stack : Cat) : Cat = 
     match stack with 
@@ -126,45 +143,93 @@ let succ (stack : Cat) : Cat =
 let pred (stack : Cat) : Cat = 
     stack |> push (IntItem -1) |> add
 
+let oneArg stack = 
+    List.length stack >= 1
+
+let twoArgs stack = 
+    List.length stack >= 2
+
+let oneInt stack = 
+    match stack with 
+    | IntItem _ :: _ -> true 
+    | _ -> false
+
+let twoInts stack = 
+    match stack with 
+    | IntItem _ :: IntItem _ :: _ -> true 
+    | _ -> false
+
+let oneBool stack = 
+    match stack with 
+    | BoolItem _ :: _ -> true 
+    | _ -> false
+
+let twoBools stack = 
+    match stack with 
+    | BoolItem _ :: BoolItem _ :: _ -> true 
+    | _ -> false
+
+let noPrecond stack = true
+
+let execPrecond stack = 
+    match stack with 
+    | ProcItem _ :: _ -> true 
+    | _ -> false
+
+let ifPrecond stack = 
+    match stack with 
+    | ProcItem _ :: BoolItem _ :: _ -> true 
+    | _ -> false
+
+let ifelsePrecond stack = 
+    match stack with 
+    | ProcItem _ :: ProcItem _ :: BoolItem _ :: _ -> true 
+    | _ -> false
+
 let ops : (string * Op) list = 
-    [ ("swap", { op = swap; args = [AnyType; AnyType] })
-      ("dup", { op = dup; args = [AnyType] })
-      ("pop", { op = pop; args = [AnyType] })
-      ("add", { op = add; args = [IntType; IntType] })
-      ("mul", { op = mul; args = [IntType; IntType] })
-      ("true", { op = trueOp; args = [] })
-      ("false", { op = falseOp; args = [] })
-      ("zero", { op = zero; args = [] })
-      ("succ", { op = succ; args = [IntType] })
-      ("pred", { op = pred; args = [IntType] })
-      ("eq", { op = eq; args = [AnyType; AnyType] })
-      ("ne", { op = ne; args = [AnyType; AnyType] })
-      ("gt", { op = gt; args = [AnyType; AnyType] })
-      ("lt", { op = lt; args = [AnyType; AnyType] })
-      ("not", { op = notOp; args = [BoolType] })
-      ("and", { op = andOp; args = [BoolType; BoolType] })
-      ("or", { op = orOp; args = [BoolType; BoolType] })
-      ("exec", { op = nop; args = [ProcType] })
-      ("if", { op = nop; args = [ProcType; BoolType]; })
-      ("ifelse", { op = nop; args = [ProcType; ProcType; BoolType] })
+    [ ("swap", { op = swap; args = [AnyType; AnyType]; precond = twoArgs })
+      ("dup", { op = dup; args = [AnyType]; precond = oneArg })
+      ("pop", { op = pop; args = [AnyType]; precond = oneArg })
+      ("add", { op = add; args = [IntType; IntType]; precond = twoInts })
+      ("sub", { op = sub; args = [IntType; IntType]; precond = twoInts })
+      ("mul", { op = mul; args = [IntType; IntType]; precond = twoInts })
+      ("true", { op = trueOp; args = []; precond = noPrecond })
+      ("false", { op = falseOp; args = []; precond = noPrecond })
+      ("zero", { op = zero; args = []; precond = noPrecond })
+      ("succ", { op = succ; args = [IntType]; precond = oneInt })
+      ("pred", { op = pred; args = [IntType]; precond = oneInt })
+      ("neg", { op = neg; args = [IntType]; precond = oneInt })
+      ("eq", { op = eq; args = [AnyType; AnyType]; precond = twoArgs })
+      ("ne", { op = ne; args = [AnyType; AnyType]; precond = twoArgs })
+      ("gt", { op = gt; args = [AnyType; AnyType]; precond = twoArgs })
+      ("lt", { op = lt; args = [AnyType; AnyType]; precond = twoArgs })
+      ("not", { op = notOp; args = [BoolType]; precond = oneBool })
+      ("and", { op = andOp; args = [BoolType; BoolType]; precond = twoBools })
+      ("or", { op = orOp; args = [BoolType; BoolType]; precond = twoBools })
+      ("exec", { op = nop; args = [ProcType]; precond = execPrecond })
+      ("if", { op = nop; args = [ProcType; BoolType]; precond = ifPrecond })
+      ("ifelse", { op = nop; args = [ProcType; ProcType; BoolType]; precond = ifelsePrecond })
     ]
 
-let rec matchArgs (args : ItemType list) (stack : Cat) = 
-    match args, stack with 
-    | [], _ -> true 
-    | _, [] -> false 
-    | a :: restArgs, it :: restStack -> 
-        match (a, it) with 
-        | AnyType, _ -> matchArgs restArgs restStack 
-        | IntType, IntItem _ -> matchArgs restArgs restStack 
-        | BoolType, BoolItem _ -> matchArgs restArgs restStack 
-        | NameType, NameItem _ -> matchArgs restArgs restStack 
-        | ProcType, ProcItem _ -> matchArgs restArgs restStack 
-        | UnfinishedProcType, UnfinishedProcItem _ -> matchArgs restArgs restStack 
-        | _ -> false
+// let rec matchArgs (args : ItemType list) (stack : Cat) = 
+//     match args, stack with 
+//     | [], _ -> true 
+//     | _, [] -> false 
+//     | a :: restArgs, it :: restStack -> 
+//         match (a, it) with 
+//         | AnyType, _ -> matchArgs restArgs restStack 
+//         | IntType, IntItem _ -> matchArgs restArgs restStack 
+//         | BoolType, BoolItem _ -> matchArgs restArgs restStack 
+//         | NameType, NameItem _ -> matchArgs restArgs restStack 
+//         | ProcType, ProcItem _ -> matchArgs restArgs restStack 
+//         | UnfinishedProcType, UnfinishedProcItem _ -> matchArgs restArgs restStack 
+//         | _ -> false
+
+// let legalOps (stack : Cat) : string list = 
+//     ops |> List.choose (fun (name, op) -> if matchArgs op.args stack then Some name else None)
 
 let legalOps (stack : Cat) : string list = 
-    ops |> List.choose (fun (name, op) -> if matchArgs op.args stack then Some name else None)
+    ops |> List.choose (fun (name: string, op: Op) -> if op.precond stack then Some name else None)
 
 let lookupProc name = 
     match ops |> List.tryFind (fun (n, op) -> n = name) with
