@@ -9,14 +9,9 @@ and Cat = CatItem list
 
 type PushResult = Reduction of Cat | Extension of Cat | Execution of Cat * Input list 
 
-type ItemType = IntType | BoolType | ProcType | NameType | UnfinishedProcType | AnyType
-
-type Effect = Removed of int | Added of ItemType
-
-type Op = 
-    { op: Cat -> Cat 
-      args : ItemType list
-      precond : Cat -> bool }
+// type Op = 
+//     { op: Cat -> Cat 
+//       precond : Cat -> bool }
 
 let nop (stack: Cat) : Cat = stack
 
@@ -143,97 +138,100 @@ let succ (stack : Cat) : Cat =
 let pred (stack : Cat) : Cat = 
     stack |> push (IntItem -1) |> add
 
-let oneArg stack = 
-    List.length stack >= 1
+let rec oneArg stack = 
+    match stack with 
+    | UnfinishedProcItem procStack :: _ -> oneArg procStack
+    | a :: _ -> true 
+    | _ -> false
 
-let twoArgs stack = 
-    List.length stack >= 2
+let rec twoArgs stack = 
+    match stack with 
+    | UnfinishedProcItem procStack :: _ -> twoArgs procStack
+    | a :: b :: _ -> true 
+    | _ -> false
 
-let oneInt stack = 
+let rec oneInt stack = 
     match stack with 
     | IntItem _ :: _ -> true 
+    | UnfinishedProcItem procStack :: _ -> oneInt procStack
     | _ -> false
 
-let twoInts stack = 
+let rec twoInts stack = 
+    printfn "checking twoInts... %A" stack
     match stack with 
     | IntItem _ :: IntItem _ :: _ -> true 
+    | UnfinishedProcItem procStack :: _ -> 
+        printfn "UnfinishedProcItem: %A" procStack
+        twoInts procStack
     | _ -> false
 
-let oneBool stack = 
+let rec oneBool stack = 
     match stack with 
     | BoolItem _ :: _ -> true 
+    | UnfinishedProcItem procStack :: _ -> oneBool procStack
     | _ -> false
 
-let twoBools stack = 
+let rec twoBools stack = 
     match stack with 
     | BoolItem _ :: BoolItem _ :: _ -> true 
+    | UnfinishedProcItem procStack :: _ -> twoBools procStack
     | _ -> false
 
 let noPrecond stack = true
 
-let execPrecond stack = 
+let rec execPrecond stack = 
     match stack with 
     | ProcItem _ :: _ -> true 
+    | UnfinishedProcItem procStack :: _ -> execPrecond procStack
     | _ -> false
 
-let ifPrecond stack = 
+let rec ifPrecond stack = 
     match stack with 
     | ProcItem _ :: BoolItem _ :: _ -> true 
+    | UnfinishedProcItem procStack :: _ -> ifPrecond procStack
     | _ -> false
 
-let ifelsePrecond stack = 
+let rec ifelsePrecond stack = 
     match stack with 
     | ProcItem _ :: ProcItem _ :: BoolItem _ :: _ -> true 
+    | UnfinishedProcItem procStack :: _ -> ifelsePrecond procStack
     | _ -> false
 
-let ops : (string * Op) list = 
-    [ ("swap", { op = swap; args = [AnyType; AnyType]; precond = twoArgs })
-      ("dup", { op = dup; args = [AnyType]; precond = oneArg })
-      ("pop", { op = pop; args = [AnyType]; precond = oneArg })
-      ("add", { op = add; args = [IntType; IntType]; precond = twoInts })
-      ("sub", { op = sub; args = [IntType; IntType]; precond = twoInts })
-      ("mul", { op = mul; args = [IntType; IntType]; precond = twoInts })
-      ("true", { op = trueOp; args = []; precond = noPrecond })
-      ("false", { op = falseOp; args = []; precond = noPrecond })
-      ("zero", { op = zero; args = []; precond = noPrecond })
-      ("succ", { op = succ; args = [IntType]; precond = oneInt })
-      ("pred", { op = pred; args = [IntType]; precond = oneInt })
-      ("neg", { op = neg; args = [IntType]; precond = oneInt })
-      ("eq", { op = eq; args = [AnyType; AnyType]; precond = twoArgs })
-      ("ne", { op = ne; args = [AnyType; AnyType]; precond = twoArgs })
-      ("gt", { op = gt; args = [AnyType; AnyType]; precond = twoArgs })
-      ("lt", { op = lt; args = [AnyType; AnyType]; precond = twoArgs })
-      ("not", { op = notOp; args = [BoolType]; precond = oneBool })
-      ("and", { op = andOp; args = [BoolType; BoolType]; precond = twoBools })
-      ("or", { op = orOp; args = [BoolType; BoolType]; precond = twoBools })
-      ("exec", { op = nop; args = [ProcType]; precond = execPrecond })
-      ("if", { op = nop; args = [ProcType; BoolType]; precond = ifPrecond })
-      ("ifelse", { op = nop; args = [ProcType; ProcType; BoolType]; precond = ifelsePrecond })
+let endPrecond stack = 
+    match stack with 
+    | UnfinishedProcItem _ :: _ -> true 
+    | _ -> false
+
+let ops : (string * (Cat -> Cat)) list = 
+    [ ("swap", swap)
+      ("dup", dup)
+      ("pop", pop)
+      ("add", add)
+      ("sub", sub)
+      ("mul", mul)
+      ("true", trueOp)
+      ("false", falseOp)
+      ("zero", zero)
+      ("succ", succ)
+      ("pred", pred)
+      ("neg", neg)
+      ("eq", eq)
+      ("ne", ne)
+      ("gt", gt)
+      ("lt", lt)
+      ("not", notOp)
+      ("and", andOp)
+      ("or", orOp)
+    //   ("exec", nop)
+    //   ("if", nop)
+    //   ("ifelse", nop)
+    //   ("begin", { op = nop; precond = noPrecond })
+    //   ("end", { op = nop; precond = endPrecond })
     ]
-
-// let rec matchArgs (args : ItemType list) (stack : Cat) = 
-//     match args, stack with 
-//     | [], _ -> true 
-//     | _, [] -> false 
-//     | a :: restArgs, it :: restStack -> 
-//         match (a, it) with 
-//         | AnyType, _ -> matchArgs restArgs restStack 
-//         | IntType, IntItem _ -> matchArgs restArgs restStack 
-//         | BoolType, BoolItem _ -> matchArgs restArgs restStack 
-//         | NameType, NameItem _ -> matchArgs restArgs restStack 
-//         | ProcType, ProcItem _ -> matchArgs restArgs restStack 
-//         | UnfinishedProcType, UnfinishedProcItem _ -> matchArgs restArgs restStack 
-//         | _ -> false
-
-// let legalOps (stack : Cat) : string list = 
-//     ops |> List.choose (fun (name, op) -> if matchArgs op.args stack then Some name else None)
-
-let legalOps (stack : Cat) : string list = 
-    ops |> List.choose (fun (name: string, op: Op) -> if op.precond stack then Some name else None)
 
 let lookupProc name = 
     match ops |> List.tryFind (fun (n, op) -> n = name) with
-    | Some (n, op) -> op.op
+    | Some (n, op) -> op
     | None -> failwith <| sprintf "Unknown operation %s" name
 
 let isInsideUnfinishedProc (stack : Cat) = 
@@ -323,6 +321,7 @@ let pushInput (e : Input) (stack : Cat) : PushResult =
                 | _ -> failwith "type error in ifelse" 
             | _ -> failwith "stack underflow in ifelse"
     | NameInput name -> 
+        printfn "push name %s" name
         if isInsideUnfinishedProc stack then 
             extend (NameItem name) stack 
         else 

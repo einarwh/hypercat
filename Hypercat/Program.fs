@@ -5,6 +5,7 @@ open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.Hosting
 open Microsoft.AspNetCore.Http
 open Cat
+open Legal
 
 type Item = SimpleItem of string | CompositeItem of Item list
 
