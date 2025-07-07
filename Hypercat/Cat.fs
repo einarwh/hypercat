@@ -9,10 +9,6 @@ and Cat = CatItem list
 
 type PushResult = Reduction of Cat | Extension of Cat | Execution of Cat * Input list 
 
-// type Op = 
-//     { op: Cat -> Cat 
-//       precond : Cat -> bool }
-
 let nop (stack: Cat) : Cat = stack
 
 let swap (stack : Cat) : Cat = 
