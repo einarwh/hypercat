@@ -107,8 +107,10 @@ let getHandler (ctx : HttpContext) : Task =
                 |> List.map (fun opName -> createOplink url opName) 
                 |> List.map (fun link -> sprintf "<li>%s</li>" link)
                 |> List.reduce (fun ul1 ul2 -> ul1 + ul2)
-            let linkList : string = sprintf "<ul>%s</ul>" linkItems
-            let body = sprintf "<body>%s</body>" linkList
+            let header = sprintf "<h1>Hypercat</h1>"
+            let description = sprintf "<p>A hypermedia-driven concatenative programming language.</p>"
+            let linkList = sprintf "<ul>%s</ul>" linkItems
+            let body = sprintf "<body>%s %s %s</body>" header description linkList
             let doc = sprintf "<html><style>body { font-family: consolas; }</style><body>%s</body></html>" body
             ctx.Response.StatusCode <- 200
             ctx.Response.WriteAsync(doc)
