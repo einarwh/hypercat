@@ -7,8 +7,6 @@ open Microsoft.AspNetCore.Http
 open Cat
 open Legal
 
-type Item = SimpleItem of string | CompositeItem of Item list
-
 let createOplink (url : string) name = 
     let href = Path.Combine(url, name)
     let result = sprintf "<a href=\"%s\">%s</a>" href name
@@ -117,12 +115,12 @@ let getHandler (ctx : HttpContext) : Task =
         | _ -> 
             failwith "?"
     with 
-    // | StackUnderflowException -> 
-    //     ctx.Response.StatusCode <- 400
-    //     ctx.Response.WriteAsync("Stack underflow exception!")
-    // | TypeException msg -> 
-    //     ctx.Response.StatusCode <- 400
-    //     ctx.Response.WriteAsync(msg)
+    | StackUnderflowError opname -> 
+        ctx.Response.StatusCode <- 400
+        ctx.Response.WriteAsync(sprintf "Stack underflow in %s!" opname)
+    | TypeError opname -> 
+        ctx.Response.StatusCode <- 400
+        ctx.Response.WriteAsync(sprintf "Type error in %s!" opname)
     | ex -> 
         ctx.Response.StatusCode <- 500
         ctx.Response.WriteAsync(ex.Message)

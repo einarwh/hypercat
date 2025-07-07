@@ -2,6 +2,10 @@ module Cat
 
 open System
 
+exception StackUnderflowError of string
+
+exception TypeError of string 
+
 type Input = IntInput of int | BoolInput of bool | NameInput of string
 
 type CatItem = IntItem of int | BoolItem of bool | ProcItem of Cat | NameItem of string | UnfinishedProcItem of Cat 
@@ -14,17 +18,17 @@ let nop (stack: Cat) : Cat = stack
 let swap (stack : Cat) : Cat = 
     match stack with 
     | a :: b :: rest -> b :: a :: rest 
-    | _ -> failwith "stack underflow in swap"
+    | _ -> raise (StackUnderflowError "swap")
 
 let dup (stack : Cat) : Cat = 
     match stack with 
     | a :: rest -> a :: a :: rest 
-    | _ -> failwith "stack underflow in dup"
+    | _ -> raise (StackUnderflowError "dup")
 
 let pop (stack : Cat) : Cat = 
     match stack with 
     | a :: rest -> rest 
-    | _ -> failwith "stack underflow in pop"
+    | _ -> raise (StackUnderflowError "pop")
 
 let push (e : CatItem) (stack : Cat) : Cat =
     e :: stack
@@ -34,32 +38,32 @@ let add (stack : Cat) : Cat =
     | a :: b :: rest -> 
         match (a, b) with 
         | IntItem n1, IntItem n2 -> IntItem (n2 + n1) :: rest
-        | _ -> failwith "type error in add"
-    | _ -> failwith "stack underflow in add"
+        | _ -> raise (TypeError "add")
+    | _ -> raise (StackUnderflowError "add")
 
 let sub (stack : Cat) : Cat = 
     match stack with 
     | a :: b :: rest -> 
         match (a, b) with 
         | IntItem n1, IntItem n2 -> IntItem (n2 - n1) :: rest
-        | _ -> failwith "type error in sub"
-    | _ -> failwith "stack underflow in sub"
+        | _ -> raise (TypeError "sub")
+    | _ -> raise (StackUnderflowError "sub")
 
 let mul (stack : Cat) : Cat = 
     match stack with 
     | a :: b :: rest -> 
         match (a, b) with 
         | IntItem n1, IntItem n2 -> IntItem (n2 * n1) :: rest
-        | _ -> failwith "type error in mul"
-    | _ -> failwith "stack underflow in mul"
+        | _ -> raise (TypeError "mul")
+    | _ -> raise (StackUnderflowError "mul")
 
 let neg (stack : Cat) : Cat = 
     match stack with 
     | a :: rest -> 
         match a with 
         | IntItem n -> IntItem (- n) :: rest
-        | _ -> failwith "type error in neg"
-    | _ -> failwith "stack underflow in neg"
+        | _ -> raise (TypeError "neg")
+    | _ -> raise (StackUnderflowError "neg")
 
 let eq (stack : Cat) : Cat = 
     match stack with 
@@ -68,7 +72,7 @@ let eq (stack : Cat) : Cat =
         | IntItem n1, IntItem n2 -> BoolItem (n2 = n1) :: rest
         | BoolItem b1, BoolItem b2 -> BoolItem (b2 = b1) :: rest
         | _ -> BoolItem false :: rest
-    | _ -> failwith "stack underflow in eq"
+    | _ -> raise (StackUnderflowError "eq")
 
 let ne (stack : Cat) : Cat = 
     match stack with 
@@ -77,47 +81,47 @@ let ne (stack : Cat) : Cat =
         | IntItem n1, IntItem n2 -> BoolItem (n2 <> n1) :: rest
         | BoolItem b1, BoolItem b2 -> BoolItem (b2 <> b1) :: rest
         | _ -> BoolItem true :: rest
-    | _ -> failwith "stack underflow in ne"
+    | _ -> raise (StackUnderflowError "ne")
 
 let gt (stack : Cat) : Cat = 
     match stack with 
     | a :: b :: rest -> 
         match (a, b) with 
         | IntItem n1, IntItem n2 -> BoolItem (n2 > n1) :: rest
-        | _ -> failwith "type error in gt"
-    | _ -> failwith "stack underflow in gt"
+        | _ -> raise (TypeError "gt")
+    | _ -> raise (StackUnderflowError "gt")
 
 let lt (stack : Cat) : Cat = 
     match stack with 
     | a :: b :: rest -> 
         match (a, b) with 
         | IntItem n1, IntItem n2 -> BoolItem (n2 < n1) :: rest
-        | _ -> failwith "type error in lt"
-    | _ -> failwith "stack underflow in lt"
+        | _ -> raise (TypeError "lt")
+    | _ -> raise (StackUnderflowError "lt")
 
 let notOp (stack : Cat) : Cat = 
     match stack with 
     | a :: rest -> 
         match a with 
         | BoolItem b -> BoolItem (not b) :: rest
-        | _ -> failwith "type error in not"
-    | _ -> failwith "stack underflow in not"
+        | _ -> raise (TypeError "not")
+    | _ -> raise (StackUnderflowError "not")
 
 let andOp (stack : Cat) : Cat = 
     match stack with 
     | a :: b :: rest -> 
         match (a, b) with 
         | BoolItem b1, BoolItem b2 -> BoolItem (b2 && b1) :: rest
-        | _ -> failwith "type error in and"
-    | _ -> failwith "stack underflow in and"
+        | _ -> raise (TypeError "and")
+    | _ -> raise (StackUnderflowError "and")
 
 let orOp (stack : Cat) : Cat = 
     match stack with 
     | a :: b :: rest -> 
         match (a, b) with 
         | BoolItem b1, BoolItem b2 -> BoolItem (b2 || b1) :: rest
-        | _ -> failwith "type error in or"
-    | _ -> failwith "stack underflow in or"
+        | _ -> raise (TypeError "or")
+    | _ -> raise (StackUnderflowError "or")
 
 let trueOp (stack : Cat) : Cat = 
     stack |> push (BoolItem true) 
