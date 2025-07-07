@@ -61,19 +61,16 @@ let rec toUrl (elements : string list) (items : CatItem list) : string =
             toUrl (s :: elements) rest 
 
 let rec applyInputs (stack : Cat) (inputs : Input list)  = 
-    printfn "applyInputs, inputs left: %A" inputs
     match inputs with 
     | [] -> (Extension stack, [])
     | h :: rest -> 
         let result = pushInput h stack 
-        printfn "RESULT: %A\n" result
         match result with 
         | Reduction st -> 
             (Reduction st, rest)
         | Extension st -> 
             applyInputs st rest
         | Execution (st, procInputs) -> 
-            printfn "procInputs: %A" procInputs
             (Reduction st, (procInputs @ rest))
 
 let toLocationUrl (st : Cat) (inputsLeft : Input list) = 
@@ -95,34 +92,26 @@ let getHandler (ctx : HttpContext) : Task =
     let nonNullPath = if routePath = null then "" else routePath
     let elements = nonNullPath.Split("/") |> Array.toList |> List.filter (fun s -> s.Length > 0)
     try 
-        printfn "elements %A" elements
-        let result = "fojsfkj"
         let inputs = toInputList elements
-        printfn "inputs %A" inputs
         match inputs |> applyInputs [] with 
         | (Reduction st, inputsLeft) -> 
-            printfn "Reduced to stack: %A" st
             let url = toLocationUrl st inputsLeft
-            printfn "url: %A" url
             ctx.Response.StatusCode <- 302
             ctx.Response.Headers.Location <- url
             Task.CompletedTask
         | (Extension st, []) -> 
             let legal = legalOps st
-            printfn "LEGAL OPS %A" legal
             let url = toLocationUrl st []
-            printfn "URL %A" url
             let linkItems = 
                 legal 
                 |> List.map (fun opName -> createOplink url opName) 
                 |> List.map (fun link -> sprintf "<li>%s</li>" link)
                 |> List.reduce (fun ul1 ul2 -> ul1 + ul2)
             let linkList : string = sprintf "<ul>%s</ul>" linkItems
-            printfn "%A" linkList
             let body = sprintf "<body>%s</body>" linkList
-
+            let doc = sprintf "<html><style>body { font-family: consolas; }</style><body>%s</body></html>" body
             ctx.Response.StatusCode <- 200
-            ctx.Response.WriteAsync(body)
+            ctx.Response.WriteAsync(doc)
         | _ -> 
             failwith "?"
     with 
@@ -141,6 +130,5 @@ let main args =
     let builder = WebApplication.CreateBuilder(args)
     let app = builder.Build()
     app.MapGet("/{**path}", Func<HttpContext, Task>(getHandler)) |> ignore
-    // app.MapPost("/{**path}", Func<HttpContext, Task>(postHandler)) |> ignore
     app.Run()
     0 

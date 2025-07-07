@@ -71,7 +71,7 @@ let eq (stack : Cat) : Cat =
         match (a, b) with 
         | IntItem n1, IntItem n2 -> BoolItem (n2 = n1) :: rest
         | BoolItem b1, BoolItem b2 -> BoolItem (b2 = b1) :: rest
-        | _ -> failwith "type error in eq"
+        | _ -> BoolItem false :: rest
     | _ -> failwith "stack underflow in eq"
 
 let ne (stack : Cat) : Cat = 
@@ -80,7 +80,7 @@ let ne (stack : Cat) : Cat =
         match (a, b) with 
         | IntItem n1, IntItem n2 -> BoolItem (n2 <> n1) :: rest
         | BoolItem b1, BoolItem b2 -> BoolItem (b2 <> b1) :: rest
-        | _ -> failwith "type error in ne"
+        | _ -> BoolItem true :: rest
     | _ -> failwith "stack underflow in ne"
 
 let gt (stack : Cat) : Cat = 
@@ -138,70 +138,6 @@ let succ (stack : Cat) : Cat =
 let pred (stack : Cat) : Cat = 
     stack |> push (IntItem -1) |> add
 
-let rec oneArg stack = 
-    match stack with 
-    | UnfinishedProcItem procStack :: _ -> oneArg procStack
-    | a :: _ -> true 
-    | _ -> false
-
-let rec twoArgs stack = 
-    match stack with 
-    | UnfinishedProcItem procStack :: _ -> twoArgs procStack
-    | a :: b :: _ -> true 
-    | _ -> false
-
-let rec oneInt stack = 
-    match stack with 
-    | IntItem _ :: _ -> true 
-    | UnfinishedProcItem procStack :: _ -> oneInt procStack
-    | _ -> false
-
-let rec twoInts stack = 
-    printfn "checking twoInts... %A" stack
-    match stack with 
-    | IntItem _ :: IntItem _ :: _ -> true 
-    | UnfinishedProcItem procStack :: _ -> 
-        printfn "UnfinishedProcItem: %A" procStack
-        twoInts procStack
-    | _ -> false
-
-let rec oneBool stack = 
-    match stack with 
-    | BoolItem _ :: _ -> true 
-    | UnfinishedProcItem procStack :: _ -> oneBool procStack
-    | _ -> false
-
-let rec twoBools stack = 
-    match stack with 
-    | BoolItem _ :: BoolItem _ :: _ -> true 
-    | UnfinishedProcItem procStack :: _ -> twoBools procStack
-    | _ -> false
-
-let noPrecond stack = true
-
-let rec execPrecond stack = 
-    match stack with 
-    | ProcItem _ :: _ -> true 
-    | UnfinishedProcItem procStack :: _ -> execPrecond procStack
-    | _ -> false
-
-let rec ifPrecond stack = 
-    match stack with 
-    | ProcItem _ :: BoolItem _ :: _ -> true 
-    | UnfinishedProcItem procStack :: _ -> ifPrecond procStack
-    | _ -> false
-
-let rec ifelsePrecond stack = 
-    match stack with 
-    | ProcItem _ :: ProcItem _ :: BoolItem _ :: _ -> true 
-    | UnfinishedProcItem procStack :: _ -> ifelsePrecond procStack
-    | _ -> false
-
-let endPrecond stack = 
-    match stack with 
-    | UnfinishedProcItem _ :: _ -> true 
-    | _ -> false
-
 let ops : (string * (Cat -> Cat)) list = 
     [ ("swap", swap)
       ("dup", dup)
@@ -222,11 +158,6 @@ let ops : (string * (Cat -> Cat)) list =
       ("not", notOp)
       ("and", andOp)
       ("or", orOp)
-    //   ("exec", nop)
-    //   ("if", nop)
-    //   ("ifelse", nop)
-    //   ("begin", { op = nop; precond = noPrecond })
-    //   ("end", { op = nop; precond = endPrecond })
     ]
 
 let lookupProc name = 
@@ -277,16 +208,13 @@ let pushInput (e : Input) (stack : Cat) : PushResult =
     | IntInput n -> extend (IntItem n) stack 
     | BoolInput b -> extend (BoolItem b) stack 
     | NameInput name when name = "begin" -> 
-        printfn "begin!"
         extend (UnfinishedProcItem []) stack
     | NameInput name when name = "end" -> 
-        printfn "end!"
         match stack with 
         | UnfinishedProcItem prc :: rest -> 
             Extension (endProc (UnfinishedProcItem prc) :: rest)
         | _ -> failwith "unexpected end!"
     | NameInput name when name = "exec" -> 
-        printfn "exec!"
         if isInsideUnfinishedProc stack then 
             extend (NameItem name) stack 
         else 
@@ -295,7 +223,6 @@ let pushInput (e : Input) (stack : Cat) : PushResult =
                 Execution (rest, toInputs [] prc)
             | _ -> failwith "type error in exec"
     | NameInput name when name = "if" -> 
-        printfn "if!"
         if isInsideUnfinishedProc stack then 
             extend (NameItem name) stack 
         else 
@@ -308,7 +235,6 @@ let pushInput (e : Input) (stack : Cat) : PushResult =
                 | _ -> failwith "type error in if" 
             | _ -> failwith "stack underflow in if"
     | NameInput name when name = "ifelse" -> 
-        printfn "ifelse!"
         if isInsideUnfinishedProc stack then 
             extend (NameItem name) stack 
         else 
@@ -321,7 +247,6 @@ let pushInput (e : Input) (stack : Cat) : PushResult =
                 | _ -> failwith "type error in ifelse" 
             | _ -> failwith "stack underflow in ifelse"
     | NameInput name -> 
-        printfn "push name %s" name
         if isInsideUnfinishedProc stack then 
             extend (NameItem name) stack 
         else 
