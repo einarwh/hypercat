@@ -139,6 +139,38 @@ let xorOp (stack : Cat) : Cat =
         | _ -> raise (TypeError "xor")
     | _ -> raise (StackUnderflowError "xor")
 
+let concat (stack : Cat) : Cat = 
+   match stack with 
+    | a :: b :: rest -> 
+        match (a, b) with 
+        | ProcItem p1, ProcItem p2 -> ProcItem (p1 @ p2) :: rest
+        | _ -> raise (TypeError "concat")
+    | _ -> raise (StackUnderflowError "concat")
+
+let head (stack : Cat) : Cat = 
+   match stack with 
+    | a :: rest -> 
+        match a with 
+        | ProcItem block ->
+            match block with 
+            | h :: _ -> 
+                h :: rest 
+            | _ -> raise (StackUnderflowError "head")
+        | _ -> raise (TypeError "head")
+    | _ -> raise (StackUnderflowError "head")
+
+let tail (stack : Cat) : Cat = 
+   match stack with 
+    | a :: rest -> 
+        match a with 
+        | ProcItem block ->
+            match block with 
+            | _ :: t -> 
+                (ProcItem t) :: rest 
+            | _ -> raise (StackUnderflowError "tail")
+        | _ -> raise (TypeError "tail")
+    | _ -> raise (StackUnderflowError "tail")
+
 let trueOp (stack : Cat) : Cat = 
     stack |> push (BoolItem true) 
 
@@ -149,10 +181,20 @@ let zero (stack : Cat) : Cat =
     stack |> push (IntItem 0) 
 
 let succ (stack : Cat) : Cat = 
-    stack |> push (IntItem 1) |> add
+    match stack with 
+    | a :: rest -> 
+        match a with 
+        | IntItem n -> IntItem (n + 1) :: rest
+        | _ -> raise (TypeError "succ")
+    | _ -> raise (StackUnderflowError "succ")
 
 let pred (stack : Cat) : Cat = 
-    stack |> push (IntItem -1) |> add
+    match stack with 
+    | a :: rest -> 
+        match a with 
+        | IntItem n -> IntItem (n - 1) :: rest
+        | _ -> raise (TypeError "pred")
+    | _ -> raise (StackUnderflowError "pred")
 
 let ops : (string * (Cat -> Cat)) list = 
     [ ("swap", swap)
@@ -176,6 +218,9 @@ let ops : (string * (Cat -> Cat)) list =
       ("and", andOp)
       ("or", orOp)
       ("xor", xorOp)
+      ("concat", concat)
+      ("head", head)
+      ("tail", tail)
     ]
 
 let lookupProc name = 

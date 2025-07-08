@@ -66,6 +66,16 @@ let rec execPrecond stack =
     | ProcItem _ :: _ -> true 
     | _ -> false
 
+let rec oneBlock stack = 
+    match stack with 
+    | ProcItem _ :: _ -> true 
+    | _ -> false
+
+let rec twoBlocks stack = 
+    match stack with 
+    | ProcItem _ :: ProcItem _ :: _ -> true 
+    | _ -> false
+
 let rec ifPrecond stack = 
     match stack with 
     | ProcItem _ :: BoolItem _ :: _ -> true 
@@ -103,6 +113,9 @@ let preconds : (string * (Cat -> bool)) list =
       ("and", twoBools)
       ("or", twoBools)
       ("xor", twoBools)
+      ("concat", twoBlocks)
+      ("head", oneBlock)
+      ("tail", oneBlock)
       ("exec", execPrecond)
       ("if", ifPrecond)
       ("ifelse", ifelsePrecond)

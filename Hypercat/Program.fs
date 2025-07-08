@@ -121,7 +121,9 @@ let rec toStackString (depth : int) (elements : string list) (items : CatItem li
         | NameItem name ->
             toStackString depth (name :: elements) rest 
         | ProcItem procItems -> 
-            let s = "end" + "\n" + toStackString (depth + 1) [] procItems + "\n" + indentation + "begin"
+            let s = 
+                if List.isEmpty procItems then "end" + "\n" + indentation + "begin"
+                else "end" + "\n" + toStackString (depth + 1) [] procItems + "\n" + indentation + "begin"
             toStackString depth (s :: elements) rest 
         | UnfinishedProcItem procItems -> 
             let unfinished = toStackString (depth + 1) [] procItems
