@@ -6,9 +6,9 @@ exception StackUnderflowError of string
 
 exception TypeError of string 
 
-type Input = IntInput of int | BoolInput of bool | NameInput of string
+type Input = IntInput of int | BoolInput of bool | NameInput of string | StringInput of string
 
-type CatItem = IntItem of int | BoolItem of bool | ProcItem of Cat | NameItem of string | UnfinishedProcItem of Cat 
+type CatItem = IntItem of int | BoolItem of bool | NameItem of string | StringItem of string | ProcItem of Cat | UnfinishedProcItem of Cat 
 and Cat = CatItem list
 
 type PushResult = Reduction of Cat | Extension of Cat | Execution of Cat * Input list 
@@ -253,6 +253,17 @@ let pred (stack : Cat) : Cat =
         | _ -> raise (TypeError "pred")
     | _ -> raise (StackUnderflowError "pred")
 
+let split (stack : Cat) : Cat = 
+   printfn "split %A" stack 
+   match stack with 
+    | a :: b :: rest -> 
+        match (a, b) with 
+        | StringItem str, StringItem sep -> 
+            let ss = str.Split(sep) |> Seq.toList |> List.map (fun s -> StringItem s)
+            ss @ rest
+        | _ -> raise (TypeError "split")
+    | _ -> raise (StackUnderflowError "split")
+
 let ops : (string * (Cat -> Cat)) list = 
     [ ("clear", fun _ -> [])
       ("swap", swap)
@@ -283,6 +294,7 @@ let ops : (string * (Cat -> Cat)) list =
       ("cons", cons)
       ("rev", rev)
       ("map", map)
+      ("split", split)
     ]
 
 let lookupProc name = 
@@ -312,6 +324,7 @@ let rec toInputs (inputs : Input list) (items : CatItem list) : Input list =
         | IntItem n -> toInputs (IntInput n :: inputs) rest
         | BoolItem b -> toInputs (BoolInput b :: inputs) rest
         | NameItem name -> toInputs (NameInput name :: inputs) rest 
+        | StringItem str -> toInputs (StringInput str :: inputs) rest 
         | ProcItem procItems -> 
             let procInputs = [ NameInput "begin" ] @ toInputs [] procItems @ [ NameInput "end" ]
             toInputs (procInputs @ inputs) rest 
@@ -332,6 +345,7 @@ let pushInput (e : Input) (stack : Cat) : PushResult =
     match e with 
     | IntInput n -> extend (IntItem n) stack 
     | BoolInput b -> extend (BoolItem b) stack 
+    | StringInput s -> extend (StringItem s) stack 
     | NameInput name when name = "begin" -> 
         extend (UnfinishedProcItem []) stack
     | NameInput name when name = "end" -> 

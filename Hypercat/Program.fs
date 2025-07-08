@@ -1,6 +1,7 @@
 open System
 open System.IO
 open System.Threading.Tasks
+open System.Text.RegularExpressions
 open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.Hosting
 open Microsoft.AspNetCore.Http
@@ -13,7 +14,9 @@ let createOplink (url : string) name =
     let result = sprintf "<a href=\"%s\">%s</a>" href name
     result
 
+
 let toInput (element : string) : Input = 
+    printfn "element -> input %s" element
     match System.Int32.TryParse element with
     | true, n -> IntInput n 
     | _ -> 
@@ -21,8 +24,13 @@ let toInput (element : string) : Input =
             BoolInput true
         else if String.Equals("false", element, StringComparison.OrdinalIgnoreCase) then 
             BoolInput false
-        else 
-            NameInput element
+        else
+            let m = Regex.Match(element, "\"(.+)\"")
+            if m.Success then 
+                let g =  m.Groups[1] 
+                StringInput g.Value
+            else 
+                NameInput element
 
 let toInputList (elements : string list) : Input list = 
     elements |> List.map toInput
@@ -31,6 +39,7 @@ let toElement (input : Input) : string =
     match input with 
     | IntInput n -> n.ToString()
     | BoolInput b -> if b then "true" else "false"
+    | StringInput s -> sprintf "\"%s\"" s 
     | NameInput s -> s 
 
 let toElementList (inputs : Input list) : string list = 
@@ -50,6 +59,9 @@ let rec toUrl (elements : string list) (items : CatItem list) : string =
         | BoolItem b ->
             let s = if b then "true" else "false"
             toUrl (s :: elements) rest 
+        | StringItem s ->
+            let quoted = sprintf "\"%s\"" s 
+            toUrl (quoted :: elements) rest 
         | NameItem name ->
             toUrl (name :: elements) rest 
         | ProcItem procItems -> 
@@ -120,6 +132,8 @@ let rec toStackString (depth : int) (elements : string list) (items : CatItem li
             toStackString depth (s :: elements) rest 
         | NameItem name ->
             toStackString depth (name :: elements) rest 
+        | StringItem str ->
+            toStackString depth (str :: elements) rest 
         | ProcItem procItems -> 
             let s = 
                 if List.isEmpty procItems then "end" + "\n" + indentation + "begin"
