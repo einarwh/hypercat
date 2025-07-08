@@ -6,6 +6,7 @@ open Microsoft.Extensions.Hosting
 open Microsoft.AspNetCore.Http
 open Cat
 open Legal
+open View
 
 let createOplink (url : string) name = 
     let href = Path.Combine(url, name)
@@ -84,6 +85,97 @@ let toLocationUrl (st : Cat) (inputsLeft : Input list) =
         let urlPart1 = st |> toUrl []
         let urlPart2 = inputsLeft |> toElementList |> List.reduce (fun s1 s2 -> s1 + "/" + s2)
         "/" + urlPart1 + "/" + urlPart2 
+
+let createOperationsDiv stack = 
+    let legal = legalOps stack
+    let url = toLocationUrl stack []
+    let createOplink url name = 
+        let href = Path.Combine(url, name)
+        a [ attr "style" "color:darkred"; attr "href" href ] [ str name ]
+    let linkItems = 
+        legal 
+        |> List.map (fun opName -> createOplink url opName) 
+        |> List.map (fun link -> li [] [link])
+    div [] [ 
+        h3 [] [ str "Operations" ] 
+        div [] [
+            ul [] linkItems
+        ] 
+    ] 
+
+let rec toStackString (depth : int) (elements : string list) (items : CatItem list) : string = 
+    let indentation = new string(' ', depth)
+    printfn "indent: %A" indentation
+    match items with 
+    | [] -> 
+        printfn "ELEMENTS %A" elements
+        match elements |> List.map (fun e -> indentation + e) with 
+        | [] -> ""
+        | mapped -> mapped |> List.reduce (fun s1 s2 -> s1 + "\n" + s2) 
+    | it :: rest -> 
+        match it with 
+        | IntItem n -> 
+            let s = n.ToString()
+            toStackString depth (s :: elements) rest 
+        | BoolItem b ->
+            let s = if b then "true" else "false"
+            toStackString depth (s :: elements) rest 
+        | NameItem name ->
+            toStackString depth (name :: elements) rest 
+        | ProcItem procItems -> 
+            let s = "begin" + "\n" + toStackString (depth + 1) [] procItems + "\n" + indentation + "end"
+            toStackString depth (s :: elements) rest 
+        | UnfinishedProcItem procItems -> 
+            let s = "begin" + "\n" + toStackString (depth + 1) [] procItems
+            toStackString depth (s :: elements) rest     
+
+let createStackDiv stack =
+    // <div style="width:200px;overflow:auto">
+    // <pre>This is a pre with a fixed width. It will use as much space as specified.</pre>
+    // </div> 
+
+    let stackString = toStackString 0 [] stack
+
+    printfn "stack? %A" stack
+
+    div [ attr "style" "width:300px;overflow:auto" ] [
+        div [] [
+            h3 [] [ str "Stack" ]
+            pre [ attr "style" "font-family:Consolas" ] [ str stackString ]
+        ]
+    ]
+
+let createDoc stack = 
+    let operationsDiv = createOperationsDiv stack
+    let stackDiv = createStackDiv stack
+
+    let doc = 
+        html [] [
+            head [] [
+                title [] [ str "Hypercat: A hypermedia-driven concatenative programming language"]
+                meta [ attr "name" "charset"; attr "content" "UTF-8" ]
+                meta [ attr "name" "description"; attr "content" "Hypercat: A hypermedia-driven concatenative programming language" ]
+                meta [ attr "name" "author"; attr "content" "Einar W. Høst" ]
+                meta [ attr "name" "viewport"; attr "content" "width=device-width, initial-scale=1.0" ]
+            ]
+            body [ attr "style" "font-family:Consolas" ] [
+                div [] [
+                    h1 [] [ str "Hypercat" ] 
+                    p [] [ str "A hypermedia-driven concatenative programming language." ]
+                    table [ attr "valign" "top" ] [
+                        tr [ attr "valign" "top" ] [
+                            td [ attr "width" "200" ] [
+                                operationsDiv
+                            ]
+                            td [ attr "width" "300" ] [
+                                stackDiv
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
+    doc
         
 let getHandler (ctx : HttpContext) : Task = 
     let routePath = ctx.Request.RouteValues["path"] :?> string
@@ -109,9 +201,12 @@ let getHandler (ctx : HttpContext) : Task =
             let description = sprintf "<p>A hypermedia-driven concatenative programming language.</p>"
             let linkList = sprintf "<ul>%s</ul>" linkItems
             let body = sprintf "<body>%s %s %s</body>" header description linkList
-            let doc = sprintf "<html><style>body { font-family: consolas; }</style><body>%s</body></html>" body
+            let docStr = sprintf "<html><style>body { font-family: consolas; }</style><body>%s</body></html>" body
+            let doc = createDoc st 
+            let s = RenderView.AsString.htmlDocument doc
+
             ctx.Response.StatusCode <- 200
-            ctx.Response.WriteAsync(doc)
+            ctx.Response.WriteAsync(s)
         | _ -> 
             failwith "?"
     with 

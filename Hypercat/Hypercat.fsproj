@@ -7,6 +7,7 @@
   <ItemGroup>
     <Compile Include="Cat.fs" />
     <Compile Include="Legal.fs" />
+    <Compile Include="View.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
