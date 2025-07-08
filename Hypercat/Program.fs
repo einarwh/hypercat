@@ -109,7 +109,7 @@ let rec toStackString (depth : int) (elements : string list) (items : CatItem li
     match items with 
     | [] -> 
         printfn "ELEMENTS %A" elements
-        match elements |> List.map (fun e -> indentation + e) with 
+        match elements |> List.rev |> List.map (fun e -> indentation + e) with 
         | [] -> ""
         | mapped -> mapped |> List.reduce (fun s1 s2 -> s1 + "\n" + s2) 
     | it :: rest -> 
@@ -123,10 +123,11 @@ let rec toStackString (depth : int) (elements : string list) (items : CatItem li
         | NameItem name ->
             toStackString depth (name :: elements) rest 
         | ProcItem procItems -> 
-            let s = "begin" + "\n" + toStackString (depth + 1) [] procItems + "\n" + indentation + "end"
+            let s = "end" + "\n" + toStackString (depth + 1) [] procItems + "\n" + indentation + "begin"
             toStackString depth (s :: elements) rest 
         | UnfinishedProcItem procItems -> 
-            let s = "begin" + "\n" + toStackString (depth + 1) [] procItems
+            let unfinished = toStackString (depth + 1) [] procItems
+            let s = if unfinished = String.Empty then "begin" else unfinished + "\n" + "begin"
             toStackString depth (s :: elements) rest     
 
 let createStackDiv stack =
