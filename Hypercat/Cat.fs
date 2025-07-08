@@ -8,7 +8,15 @@ exception TypeError of string
 
 type Input = IntInput of int | BoolInput of bool | NameInput of string | StringInput of string
 
-type CatItem = IntItem of int | BoolItem of bool | NameItem of string | StringItem of string | ProcItem of Cat | UnfinishedProcItem of Cat 
+type CatItem = 
+    IntItem of int 
+    | BoolItem of bool 
+    | NameItem of string 
+    | StringItem of string 
+    | ListItem of Cat
+    | UnfinishedListItem of Cat
+    | ProcItem of Cat 
+    | UnfinishedProcItem of Cat 
 and Cat = CatItem list
 
 type PushResult = Reduction of Cat | Extension of Cat | Execution of Cat * Input list 
@@ -159,6 +167,7 @@ let concat (stack : Cat) : Cat =
    match stack with 
     | a :: b :: rest -> 
         match (a, b) with 
+        | ListItem l1, ListItem l2 -> ListItem (l1 @ l2) :: rest
         | ProcItem p1, ProcItem p2 -> ProcItem (p1 @ p2) :: rest
         | _ -> raise (TypeError "concat")
     | _ -> raise (StackUnderflowError "concat")
@@ -167,10 +176,13 @@ let head (stack : Cat) : Cat =
    match stack with 
     | a :: rest -> 
         match a with 
+        | ListItem block ->
+            match block with 
+            | h :: _ -> h :: rest 
+            | _ -> raise (StackUnderflowError "head")
         | ProcItem block ->
             match block with 
-            | h :: _ -> 
-                h :: rest 
+            | h :: _ -> h :: rest 
             | _ -> raise (StackUnderflowError "head")
         | _ -> raise (TypeError "head")
     | _ -> raise (StackUnderflowError "head")
@@ -179,6 +191,11 @@ let tail (stack : Cat) : Cat =
    match stack with 
     | a :: rest -> 
         match a with 
+        | ListItem block ->
+            match block with 
+            | _ :: t -> 
+                (ListItem t) :: rest 
+            | _ -> raise (StackUnderflowError "tail")
         | ProcItem block ->
             match block with 
             | _ :: t -> 
@@ -191,6 +208,7 @@ let rev (stack : Cat) : Cat =
    match stack with 
     | a :: rest -> 
         match a with 
+        | ListItem block -> (ListItem (List.rev block)) :: rest
         | ProcItem block -> (ProcItem (List.rev block)) :: rest
         | _ -> raise (TypeError "rev")
     | _ -> raise (StackUnderflowError "rev")
@@ -200,9 +218,18 @@ let cons (stack : Cat) : Cat =
    match stack with 
     | a :: b :: rest -> 
         match a with 
+        | ListItem block -> (ListItem (b :: block)) :: rest
         | ProcItem block -> (ProcItem (b :: block)) :: rest
         | _ -> raise (TypeError "cons")
     | _ -> raise (StackUnderflowError "cons")
+
+let flatten (stack : Cat) : Cat = 
+   match stack with 
+    | a :: rest -> 
+        match a with 
+        | ListItem block -> block @ rest
+        | _ -> raise (TypeError "flatten")
+    | _ -> raise (StackUnderflowError "flatten")
 
 let mapItem (codeBlock : CatItem list) (item : CatItem) : CatItem list = 
     [ NameItem "exec"; ProcItem codeBlock; item ]
@@ -292,6 +319,7 @@ let ops : (string * (Cat -> Cat)) list =
       ("head", head)
       ("tail", tail)
       ("cons", cons)
+      ("flatten", flatten)
       ("rev", rev)
       ("map", map)
       ("split", split)
@@ -309,6 +337,8 @@ let isInsideUnfinishedProc (stack : Cat) =
 
 let rec extendDown (it : CatItem) (stack : Cat) : Cat = 
     match stack with 
+    | (UnfinishedListItem unfinished) :: rest -> 
+        (UnfinishedListItem (extendDown it unfinished)) :: rest
     | (UnfinishedProcItem unfinished) :: rest -> 
         (UnfinishedProcItem (extendDown it unfinished)) :: rest
     | _ -> it :: stack
@@ -325,31 +355,57 @@ let rec toInputs (inputs : Input list) (items : CatItem list) : Input list =
         | BoolItem b -> toInputs (BoolInput b :: inputs) rest
         | NameItem name -> toInputs (NameInput name :: inputs) rest 
         | StringItem str -> toInputs (StringInput str :: inputs) rest 
+        | ListItem listItems -> 
+            let listInputs = [ NameInput "list" ] @ toInputs [] listItems @ [ NameInput "end" ]
+            toInputs (listInputs @ inputs) rest 
+        | UnfinishedListItem listItems -> 
+            let listInputs = [ NameInput "proc" ] @ toInputs [] listItems
+            toInputs (listInputs @ inputs) rest 
         | ProcItem procItems -> 
-            let procInputs = [ NameInput "begin" ] @ toInputs [] procItems @ [ NameInput "end" ]
+            let procInputs = [ NameInput "proc" ] @ toInputs [] procItems @ [ NameInput "end" ]
             toInputs (procInputs @ inputs) rest 
         | UnfinishedProcItem procItems -> 
-            let procInputs = [ NameInput "begin" ] @ toInputs [] procItems
+            let procInputs = [ NameInput "proc" ] @ toInputs [] procItems
             toInputs (procInputs @ inputs) rest 
 
 let rec endProc (item : CatItem) : CatItem = 
     match item with 
+    | UnfinishedListItem lst -> 
+        match lst with 
+        | (UnfinishedListItem innerLst) :: rest -> 
+            UnfinishedListItem ((endProc (UnfinishedListItem innerLst)) :: rest)
+        | (UnfinishedProcItem innerPrc) :: rest -> 
+            UnfinishedProcItem ((endProc (UnfinishedProcItem innerPrc)) :: rest)
+        | _ -> ListItem lst 
     | UnfinishedProcItem prc -> 
         match prc with 
+        | (UnfinishedListItem innerLst) :: rest -> 
+            UnfinishedListItem ((endProc (UnfinishedListItem innerLst)) :: rest)
         | (UnfinishedProcItem innerPrc) :: rest -> 
             UnfinishedProcItem ((endProc (UnfinishedProcItem innerPrc)) :: rest)
         | _ -> ProcItem prc 
     | _ -> failwith "must be unfinished proc"
+
+let rec eval (op : Cat -> Cat) (stack : Cat) : Cat = 
+    match stack with 
+    | UnfinishedListItem innerStack :: rest ->
+        (UnfinishedListItem (eval op innerStack)) :: rest
+    | _ -> 
+        op stack 
 
 let pushInput (e : Input) (stack : Cat) : PushResult =
     match e with 
     | IntInput n -> extend (IntItem n) stack 
     | BoolInput b -> extend (BoolItem b) stack 
     | StringInput s -> extend (StringItem s) stack 
-    | NameInput name when name = "begin" -> 
+    | NameInput name when name = "proc" -> 
         extend (UnfinishedProcItem []) stack
+    | NameInput name when name = "list" -> 
+        extend (UnfinishedListItem []) stack
     | NameInput name when name = "end" -> 
         match stack with 
+        | UnfinishedListItem items :: rest -> 
+            Extension (endProc (UnfinishedListItem items) :: rest)
         | UnfinishedProcItem prc :: rest -> 
             Extension (endProc (UnfinishedProcItem prc) :: rest)
         | _ -> failwith "unexpected end!"
@@ -391,4 +447,5 @@ let pushInput (e : Input) (stack : Cat) : PushResult =
         else 
             // Lookup
             let op = lookupProc name 
-            Reduction (op stack)
+            let stack' = eval op stack
+            Reduction stack'

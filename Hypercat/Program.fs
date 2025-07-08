@@ -64,11 +64,17 @@ let rec toUrl (elements : string list) (items : CatItem list) : string =
             toUrl (quoted :: elements) rest 
         | NameItem name ->
             toUrl (name :: elements) rest 
+        | ListItem listItems -> 
+            let s = "list" + "/" + toUrl [] listItems + "/" + "end"
+            toUrl (s :: elements) rest 
+        | UnfinishedListItem listItems -> 
+            let s = "list" + "/" + toUrl [] listItems
+            toUrl (s :: elements) rest 
         | ProcItem procItems -> 
-            let s = "begin" + "/" + toUrl [] procItems + "/" + "end"
+            let s = "proc" + "/" + toUrl [] procItems + "/" + "end"
             toUrl (s :: elements) rest 
         | UnfinishedProcItem procItems -> 
-            let s = "begin" + "/" + toUrl [] procItems
+            let s = "proc" + "/" + toUrl [] procItems
             toUrl (s :: elements) rest 
 
 let rec applyInputs (stack : Cat) (inputs : Input list)  = 
@@ -134,14 +140,23 @@ let rec toStackString (depth : int) (elements : string list) (items : CatItem li
             toStackString depth (name :: elements) rest 
         | StringItem str ->
             toStackString depth (str :: elements) rest 
+        | ListItem listItems -> 
+            let s = 
+                if List.isEmpty listItems then "end" + "\n" + indentation + "list"
+                else "end" + "\n" + toStackString (depth + 1) [] listItems + "\n" + indentation + "list"
+            toStackString depth (s :: elements) rest 
+        | UnfinishedListItem listItems -> 
+            let unfinished = toStackString (depth + 1) [] listItems
+            let s = if unfinished = String.Empty then "list" else unfinished + "\n" + "list"
+            toStackString depth (s :: elements) rest
         | ProcItem procItems -> 
             let s = 
-                if List.isEmpty procItems then "end" + "\n" + indentation + "begin"
-                else "end" + "\n" + toStackString (depth + 1) [] procItems + "\n" + indentation + "begin"
+                if List.isEmpty procItems then "end" + "\n" + indentation + "proc"
+                else "end" + "\n" + toStackString (depth + 1) [] procItems + "\n" + indentation + "proc"
             toStackString depth (s :: elements) rest 
         | UnfinishedProcItem procItems -> 
             let unfinished = toStackString (depth + 1) [] procItems
-            let s = if unfinished = String.Empty then "begin" else unfinished + "\n" + "begin"
+            let s = if unfinished = String.Empty then "proc" else unfinished + "\n" + "proc"
             toStackString depth (s :: elements) rest
 
 let createStackDiv stack =

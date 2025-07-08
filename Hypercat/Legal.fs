@@ -6,6 +6,8 @@ open System
 let unrollUnfinished stack = 
     let rec fn acc st = 
         match st with 
+        | UnfinishedListItem listStack :: rest -> 
+            (fn acc listStack @ rest)
         | UnfinishedProcItem procStack :: rest -> 
             (fn acc procStack @ rest)
         | _ -> 
@@ -71,23 +73,32 @@ let rec execPrecond stack =
     | ProcItem _ :: _ -> true 
     | _ -> false
 
+let rec flattenPrecond stack = 
+    match stack with 
+    | ListItem _ :: _ -> true 
+    | _ -> false
+
 let rec oneBlock stack = 
     match stack with 
+    | ListItem _ :: _ -> true 
     | ProcItem _ :: _ -> true 
     | _ -> false
 
 let rec nonEmptyBlock stack = 
     match stack with 
+    | ListItem (_ :: _) :: _ -> true 
     | ProcItem (_ :: _) :: _ -> true 
     | _ -> false
 
 let rec twoBlocks stack = 
     match stack with 
+    | ListItem _ :: ListItem _ :: _ -> true 
     | ProcItem _ :: ProcItem _ :: _ -> true 
     | _ -> false
 
 let rec consPrecond stack = 
     match stack with 
+    | ListItem _ :: _ :: _ -> true 
     | ProcItem _ :: _ :: _ -> true 
     | _ -> false
 
@@ -102,7 +113,9 @@ let rec ifelsePrecond stack =
     | _ -> false
 
 let endPrecond stack = 
+    printfn "endPrecond %A" stack
     match stack with 
+    | UnfinishedListItem _ :: _ -> true 
     | UnfinishedProcItem _ :: _ -> true 
     | _ -> false
 
@@ -144,15 +157,20 @@ let preconds : (string * (Cat -> bool)) list =
     //   ("map", twoBlocks)
       ("split", twoStrings)
       ("exec", execPrecond)
+      ("flatten", flattenPrecond)
       ("if", ifPrecond)
       ("ifelse", ifelsePrecond)
-      ("begin", noPrecond)
+      ("proc", noPrecond)
+      ("list", noPrecond)
       ("end", endPrecond)
     ]
 
 let legalOps (stack : Cat) : string list = 
     let st = 
         match stack with 
+        | UnfinishedListItem listStack :: rest -> 
+            let unrolled = unrollUnfinished listStack
+            simulate rest unrolled
         | UnfinishedProcItem procStack :: rest -> 
             let unrolled = unrollUnfinished procStack
             simulate rest unrolled
