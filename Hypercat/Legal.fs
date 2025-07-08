@@ -102,6 +102,7 @@ let preconds : (string * (Cat -> bool)) list =
       ("not", oneBool)
       ("and", twoBools)
       ("or", twoBools)
+      ("xor", twoBools)
       ("exec", execPrecond)
       ("if", ifPrecond)
       ("ifelse", ifelsePrecond)

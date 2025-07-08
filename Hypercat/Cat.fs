@@ -131,6 +131,14 @@ let orOp (stack : Cat) : Cat =
         | _ -> raise (TypeError "or")
     | _ -> raise (StackUnderflowError "or")
 
+let xorOp (stack : Cat) : Cat = 
+    match stack with 
+    | a :: b :: rest -> 
+        match (a, b) with 
+        | BoolItem b1, BoolItem b2 -> BoolItem (b2 <> b1) :: rest
+        | _ -> raise (TypeError "xor")
+    | _ -> raise (StackUnderflowError "xor")
+
 let trueOp (stack : Cat) : Cat = 
     stack |> push (BoolItem true) 
 
@@ -167,6 +175,7 @@ let ops : (string * (Cat -> Cat)) list =
       ("not", notOp)
       ("and", andOp)
       ("or", orOp)
+      ("xor", xorOp)
     ]
 
 let lookupProc name = 
