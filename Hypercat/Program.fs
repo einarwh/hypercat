@@ -131,15 +131,8 @@ let rec toStackString (depth : int) (elements : string list) (items : CatItem li
             toStackString depth (s :: elements) rest     
 
 let createStackDiv stack =
-    // <div style="width:200px;overflow:auto">
-    // <pre>This is a pre with a fixed width. It will use as much space as specified.</pre>
-    // </div> 
-
     let stackString = toStackString 0 [] stack
-
-    printfn "stack? %A" stack
-
-    div [ attr "style" "width:300px;overflow:auto" ] [
+    div [ attr "style" "width:200px;overflow:auto" ] [
         div [] [
             h3 [] [ str "Stack" ]
             pre [ attr "style" "font-family:Consolas" ] [ str stackString ]
@@ -168,7 +161,7 @@ let createDoc stack =
                             td [ attr "width" "200" ] [
                                 operationsDiv
                             ]
-                            td [ attr "width" "300" ] [
+                            td [ attr "width" "200" ] [
                                 stackDiv
                             ]
                         ]
