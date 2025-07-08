@@ -105,10 +105,8 @@ let createOperationsDiv stack =
 
 let rec toStackString (depth : int) (elements : string list) (items : CatItem list) : string = 
     let indentation = new string(' ', depth)
-    printfn "indent: %A" indentation
     match items with 
     | [] -> 
-        printfn "ELEMENTS %A" elements
         match elements |> List.rev |> List.map (fun e -> indentation + e) with 
         | [] -> ""
         | mapped -> mapped |> List.reduce (fun s1 s2 -> s1 + "\n" + s2) 

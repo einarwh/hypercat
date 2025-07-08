@@ -88,6 +88,7 @@ let preconds : (string * (Cat -> bool)) list =
       ("add", twoInts)
       ("sub", twoInts)
       ("mul", twoInts)
+      ("div", twoInts)
       ("true", noPrecond)
       ("false", noPrecond)
       ("zero", noPrecond)

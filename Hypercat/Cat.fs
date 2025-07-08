@@ -57,6 +57,14 @@ let mul (stack : Cat) : Cat =
         | _ -> raise (TypeError "mul")
     | _ -> raise (StackUnderflowError "mul")
 
+let div (stack : Cat) : Cat = 
+    match stack with 
+    | a :: b :: rest -> 
+        match (a, b) with 
+        | IntItem n1, IntItem n2 -> IntItem (n2 / n1) :: rest
+        | _ -> raise (TypeError "div")
+    | _ -> raise (StackUnderflowError "div")
+
 let neg (stack : Cat) : Cat = 
     match stack with 
     | a :: rest -> 
@@ -145,6 +153,7 @@ let ops : (string * (Cat -> Cat)) list =
       ("add", add)
       ("sub", sub)
       ("mul", mul)
+      ("div", div)
       ("true", trueOp)
       ("false", falseOp)
       ("zero", zero)
