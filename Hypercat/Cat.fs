@@ -180,6 +180,7 @@ let rev (stack : Cat) : Cat =
     | _ -> raise (StackUnderflowError "rev")
 
 let cons (stack : Cat) : Cat = 
+   printfn "cons %A" stack 
    match stack with 
     | a :: b :: rest -> 
         match a with 
@@ -190,13 +191,24 @@ let cons (stack : Cat) : Cat =
 let mapItem (codeBlock : CatItem list) (item : CatItem) : CatItem list = 
     [ NameItem "exec"; ProcItem codeBlock; item ]
 
+let executeMap (dataBlock : CatItem list) (codeBlock : CatItem list) : CatItem list = 
+    let rec fn (stack : CatItem list) (dataItems : CatItem list) = 
+        match dataItems with 
+        | [] -> stack 
+        | item :: rest -> 
+            let added = NameItem "cons" :: NameItem "swap" :: NameItem "exec" :: ProcItem codeBlock :: item :: stack
+            fn added rest
+    fn ([ProcItem []]) dataBlock
+
 let map (stack : Cat) : Cat = 
    match stack with 
     | a :: b :: rest -> 
         match (a, b) with 
         | ProcItem dataBlock, ProcItem codeBlock -> 
+            let emptyBlock = ProcItem []
             let resultBlock = dataBlock |> List.collect (fun item -> mapItem codeBlock item)
-            (ProcItem resultBlock) :: rest 
+            let resBlock = executeMap dataBlock codeBlock 
+            resBlock @ rest 
         | _ -> raise (TypeError "map")
     | _ -> raise (StackUnderflowError "map")
 
