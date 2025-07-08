@@ -187,6 +187,19 @@ let cons (stack : Cat) : Cat =
         | _ -> raise (TypeError "cons")
     | _ -> raise (StackUnderflowError "cons")
 
+let mapItem (codeBlock : CatItem list) (item : CatItem) : CatItem list = 
+    [ NameItem "exec"; ProcItem codeBlock; item ]
+
+let map (stack : Cat) : Cat = 
+   match stack with 
+    | a :: b :: rest -> 
+        match (a, b) with 
+        | ProcItem dataBlock, ProcItem codeBlock -> 
+            let resultBlock = dataBlock |> List.collect (fun item -> mapItem codeBlock item)
+            (ProcItem resultBlock) :: rest 
+        | _ -> raise (TypeError "map")
+    | _ -> raise (StackUnderflowError "map")
+
 let trueOp (stack : Cat) : Cat = 
     stack |> push (BoolItem true) 
 
@@ -213,7 +226,8 @@ let pred (stack : Cat) : Cat =
     | _ -> raise (StackUnderflowError "pred")
 
 let ops : (string * (Cat -> Cat)) list = 
-    [ ("swap", swap)
+    [ ("clear", fun _ -> [])
+      ("swap", swap)
       ("dup", dup)
       ("pop", pop)
       ("add", add)
@@ -239,6 +253,7 @@ let ops : (string * (Cat -> Cat)) list =
       ("tail", tail)
       ("cons", cons)
       ("rev", rev)
+      ("map", map)
     ]
 
 let lookupProc name = 

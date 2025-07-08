@@ -102,7 +102,8 @@ let endPrecond stack =
     | _ -> false
 
 let preconds : (string * (Cat -> bool)) list = 
-    [ ("swap", twoArgs)
+    [ ("clear", noPrecond)
+      ("swap", twoArgs)
       ("dup", oneArg)
       ("pop", oneArg)
       ("add", twoInts)
@@ -128,6 +129,7 @@ let preconds : (string * (Cat -> bool)) list =
       ("tail", nonEmptyBlock)
       ("cons", consPrecond)
       ("rev", oneBlock)
+    //   ("map", twoBlocks)
       ("exec", execPrecond)
       ("if", ifPrecond)
       ("ifelse", ifelsePrecond)
