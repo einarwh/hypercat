@@ -71,9 +71,19 @@ let rec oneBlock stack =
     | ProcItem _ :: _ -> true 
     | _ -> false
 
+let rec nonEmptyBlock stack = 
+    match stack with 
+    | ProcItem (_ :: _) :: _ -> true 
+    | _ -> false
+
 let rec twoBlocks stack = 
     match stack with 
     | ProcItem _ :: ProcItem _ :: _ -> true 
+    | _ -> false
+
+let rec consPrecond stack = 
+    match stack with 
+    | ProcItem _ :: _ :: _ -> true 
     | _ -> false
 
 let rec ifPrecond stack = 
@@ -114,8 +124,9 @@ let preconds : (string * (Cat -> bool)) list =
       ("or", twoBools)
       ("xor", twoBools)
       ("concat", twoBlocks)
-      ("head", oneBlock)
-      ("tail", oneBlock)
+      ("head", nonEmptyBlock)
+      ("tail", nonEmptyBlock)
+      ("cons", consPrecond)
       ("rev", oneBlock)
       ("exec", execPrecond)
       ("if", ifPrecond)

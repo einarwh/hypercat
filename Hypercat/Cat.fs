@@ -179,6 +179,14 @@ let rev (stack : Cat) : Cat =
         | _ -> raise (TypeError "rev")
     | _ -> raise (StackUnderflowError "rev")
 
+let cons (stack : Cat) : Cat = 
+   match stack with 
+    | a :: b :: rest -> 
+        match a with 
+        | ProcItem block -> (ProcItem (b :: block)) :: rest
+        | _ -> raise (TypeError "cons")
+    | _ -> raise (StackUnderflowError "cons")
+
 let trueOp (stack : Cat) : Cat = 
     stack |> push (BoolItem true) 
 
@@ -229,6 +237,7 @@ let ops : (string * (Cat -> Cat)) list =
       ("concat", concat)
       ("head", head)
       ("tail", tail)
+      ("cons", cons)
       ("rev", rev)
     ]
 
