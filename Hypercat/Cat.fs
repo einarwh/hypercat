@@ -287,7 +287,7 @@ let split (stack : Cat) : Cat =
         match (a, b) with 
         | StringItem str, StringItem sep -> 
             let ss = str.Split(sep) |> Seq.toList |> List.map (fun s -> StringItem s)
-            ss @ rest
+            (ListItem ss) :: rest
         | _ -> raise (TypeError "split")
     | _ -> raise (StackUnderflowError "split")
 

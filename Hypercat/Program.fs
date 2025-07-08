@@ -139,7 +139,7 @@ let rec toStackString (depth : int) (elements : string list) (items : CatItem li
         | NameItem name ->
             toStackString depth (name :: elements) rest 
         | StringItem str ->
-            toStackString depth (str :: elements) rest 
+            toStackString depth (sprintf "\"%s\"" str :: elements) rest 
         | ListItem listItems -> 
             let s = 
                 if List.isEmpty listItems then "end" + "\n" + indentation + "list"
