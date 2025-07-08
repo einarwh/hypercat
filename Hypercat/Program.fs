@@ -128,7 +128,7 @@ let rec toStackString (depth : int) (elements : string list) (items : CatItem li
         | UnfinishedProcItem procItems -> 
             let unfinished = toStackString (depth + 1) [] procItems
             let s = if unfinished = String.Empty then "begin" else unfinished + "\n" + "begin"
-            toStackString depth (s :: elements) rest     
+            toStackString depth (s :: elements) rest
 
 let createStackDiv stack =
     let stackString = toStackString 0 [] stack

@@ -30,6 +30,22 @@ let pop (stack : Cat) : Cat =
     | a :: rest -> rest 
     | _ -> raise (StackUnderflowError "pop")
 
+let rec dropInnermost (stack : Cat) : Cat = 
+    match stack with 
+    | UnfinishedProcItem [] :: rest -> rest 
+    | UnfinishedProcItem prc :: rest -> UnfinishedProcItem (dropInnermost prc) :: rest 
+    | _ :: rest -> rest 
+    | [] -> failwith "should never be empty!"
+
+let drop (stack : Cat) : Cat = 
+    match stack with 
+    | a :: rest ->
+        match a with 
+        | UnfinishedProcItem unfinished -> 
+            dropInnermost stack 
+        | _ -> raise (TypeError "drop")
+    | _ -> raise (StackUnderflowError "drop")
+
 let push (e : CatItem) (stack : Cat) : Cat =
     e :: stack
 
@@ -242,6 +258,7 @@ let ops : (string * (Cat -> Cat)) list =
       ("swap", swap)
       ("dup", dup)
       ("pop", pop)
+      ("drop", drop)
       ("add", add)
       ("sub", sub)
       ("mul", mul)
@@ -355,7 +372,7 @@ let pushInput (e : Input) (stack : Cat) : PushResult =
                 | _ -> failwith "type error in ifelse" 
             | _ -> failwith "stack underflow in ifelse"
     | NameInput name -> 
-        if isInsideUnfinishedProc stack then 
+        if name <> "drop" && isInsideUnfinishedProc stack then 
             extend (NameItem name) stack 
         else 
             // Lookup

@@ -101,11 +101,18 @@ let endPrecond stack =
     | UnfinishedProcItem _ :: _ -> true 
     | _ -> false
 
+let dropPrecond stack = 
+    printfn "dropPrecond %A" stack
+    match stack with 
+    | UnfinishedProcItem (_ :: _) :: _ -> true 
+    | _ -> false
+
 let preconds : (string * (Cat -> bool)) list = 
     [ ("clear", noPrecond)
       ("swap", twoArgs)
       ("dup", oneArg)
       ("pop", oneArg)
+      ("drop", dropPrecond)
       ("add", twoInts)
       ("sub", twoInts)
       ("mul", twoInts)
@@ -146,6 +153,9 @@ let legalOps (stack : Cat) : string list =
         | _ -> 
             stack
     let check (name, precond) = 
-        let stk = if name = "end" then stack else st
+        let stk = 
+            if name = "end" then stack 
+            else if name = "drop" then stack
+            else st
         if precond stk then Some name else None 
     preconds |> List.choose check
