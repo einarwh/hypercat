@@ -116,6 +116,7 @@ let preconds : (string * (Cat -> bool)) list =
       ("concat", twoBlocks)
       ("head", oneBlock)
       ("tail", oneBlock)
+      ("rev", oneBlock)
       ("exec", execPrecond)
       ("if", ifPrecond)
       ("ifelse", ifelsePrecond)

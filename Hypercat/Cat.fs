@@ -171,6 +171,14 @@ let tail (stack : Cat) : Cat =
         | _ -> raise (TypeError "tail")
     | _ -> raise (StackUnderflowError "tail")
 
+let rev (stack : Cat) : Cat = 
+   match stack with 
+    | a :: rest -> 
+        match a with 
+        | ProcItem block -> (ProcItem (List.rev block)) :: rest
+        | _ -> raise (TypeError "rev")
+    | _ -> raise (StackUnderflowError "rev")
+
 let trueOp (stack : Cat) : Cat = 
     stack |> push (BoolItem true) 
 
@@ -221,6 +229,7 @@ let ops : (string * (Cat -> Cat)) list =
       ("concat", concat)
       ("head", head)
       ("tail", tail)
+      ("rev", rev)
     ]
 
 let lookupProc name = 
