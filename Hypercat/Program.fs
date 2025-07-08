@@ -190,23 +190,10 @@ let getHandler (ctx : HttpContext) : Task =
             ctx.Response.Headers.Location <- url
             Task.CompletedTask
         | (Extension st, []) -> 
-            let legal = legalOps st
-            let url = toLocationUrl st []
-            let linkItems = 
-                legal 
-                |> List.map (fun opName -> createOplink url opName) 
-                |> List.map (fun link -> sprintf "<li>%s</li>" link)
-                |> List.reduce (fun ul1 ul2 -> ul1 + ul2)
-            let header = sprintf "<h1>Hypercat</h1>"
-            let description = sprintf "<p>A hypermedia-driven concatenative programming language.</p>"
-            let linkList = sprintf "<ul>%s</ul>" linkItems
-            let body = sprintf "<body>%s %s %s</body>" header description linkList
-            let docStr = sprintf "<html><style>body { font-family: consolas; }</style><body>%s</body></html>" body
             let doc = createDoc st 
-            let s = RenderView.AsString.htmlDocument doc
-
+            let str = RenderView.AsString.htmlDocument doc
             ctx.Response.StatusCode <- 200
-            ctx.Response.WriteAsync(s)
+            ctx.Response.WriteAsync(str)
         | _ -> 
             failwith "?"
     with 
