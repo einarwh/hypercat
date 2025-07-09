@@ -61,6 +61,11 @@ let rec twoBools stack =
     | BoolItem _ :: BoolItem _ :: _ -> true 
     | _ -> false
 
+let oneString stack = 
+    match stack with 
+    | StringItem _ :: _ -> true 
+    | _ -> false
+
 let rec twoStrings stack = 
     match stack with 
     | StringItem _ :: StringItem _ :: _ -> true 
@@ -97,6 +102,11 @@ let rec twoBlocks stack =
     | _ -> false
 
 let rec mapPrecond stack = 
+    match stack with 
+    | ListItem _ :: ProcItem _ :: _ -> true 
+    | _ -> false
+
+let rec reducePrecond stack = 
     match stack with 
     | ListItem _ :: ProcItem _ :: _ -> true 
     | _ -> false
@@ -160,7 +170,9 @@ let preconds : (string * (Cat -> bool)) list =
       ("cons", consPrecond)
       ("rev", oneBlock)
       ("map", mapPrecond)
+      ("reduce", reducePrecond)
       ("split", twoStrings)
+      ("int", oneString)
       ("exec", execPrecond)
       ("flatten", flattenPrecond)
       ("if", ifPrecond)

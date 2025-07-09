@@ -231,8 +231,8 @@ let flatten (stack : Cat) : Cat =
         | _ -> raise (TypeError "flatten")
     | _ -> raise (StackUnderflowError "flatten")
 
-let mapItem (codeBlock : CatItem list) (item : CatItem) : CatItem list = 
-    [ NameItem "exec"; ProcItem codeBlock; item ]
+// let mapItem (codeBlock : CatItem list) (item : CatItem) : CatItem list = 
+//     [ NameItem "exec"; ProcItem codeBlock; item ]
 
 let executeMap (dataBlock : CatItem list) (codeBlock : CatItem list) : CatItem = 
     let rec fn (stack : CatItem list) (dataItems : CatItem list) = 
@@ -245,16 +245,42 @@ let executeMap (dataBlock : CatItem list) (codeBlock : CatItem list) : CatItem =
     let items = fn [] (dataBlock |> List.rev)
     ListItem items
 
+let executeReduce (dataBlock : CatItem list) (codeBlock : CatItem list) : CatItem list = 
+    let rec fn (stack : CatItem list) (dataItems : CatItem list) = 
+        match dataItems with 
+        | [] -> stack
+        | item :: rest -> 
+            let reduced = NameItem "exec" :: ProcItem codeBlock :: item :: stack
+            printfn "reduced %A" reduced
+            fn reduced rest
+    match dataBlock with
+    | [] -> raise (StackUnderflowError "reduce")
+    | h :: rest -> 
+        let result = fn [h] rest 
+        result
+
 let map (stack : Cat) : Cat = 
     printfn "map %A" stack
     match stack with 
     | a :: b :: rest -> 
         match (a, b) with 
         | ListItem dataBlock, ProcItem codeBlock -> 
-            let emptyBlock = ProcItem []
-            let resultBlock = dataBlock |> List.collect (fun item -> mapItem codeBlock item)
-            let resBlock = executeMap dataBlock codeBlock 
-            resBlock :: rest 
+            // let emptyBlock = ProcItem []
+            // let resultBlock = dataBlock |> List.collect (fun item -> mapItem codeBlock item)
+            let listItem = executeMap dataBlock codeBlock 
+            listItem :: rest 
+        | _ -> raise (TypeError "map")
+    | _ -> raise (StackUnderflowError "map")
+
+let reduce (stack : Cat) : Cat = 
+    printfn "reduce %A" stack
+    match stack with 
+    | a :: b :: rest -> 
+        match (a, b) with 
+        | ListItem dataBlock, ProcItem codeBlock -> 
+            // let emptyBlock = ProcItem []
+            let block = executeReduce dataBlock codeBlock 
+            block @ rest 
         | _ -> raise (TypeError "map")
     | _ -> raise (StackUnderflowError "map")
 
@@ -295,6 +321,17 @@ let split (stack : Cat) : Cat =
         | _ -> raise (TypeError "split")
     | _ -> raise (StackUnderflowError "split")
 
+let intOp (stack : Cat) : Cat = 
+   match stack with 
+    | a :: rest -> 
+        match a with 
+        | StringItem str -> 
+            match System.Int32.TryParse str with
+            | true, n -> (IntItem n) :: rest 
+            | _ -> failwith "not an integer value"
+        | _ -> raise (TypeError "int")
+    | _ -> raise (StackUnderflowError "int")
+
 let ops : (string * (Cat -> Cat)) list = 
     [ ("clear", fun _ -> [])
       ("swap", swap)
@@ -326,7 +363,9 @@ let ops : (string * (Cat -> Cat)) list =
       ("flatten", flatten)
       ("rev", rev)
       ("map", map)
+      ("reduce", reduce)
       ("split", split)
+      ("int", intOp)
     ]
 
 let lookupProc name = 
@@ -344,12 +383,17 @@ let rec isInsideUnfinishedProc (stack : Cat) =
         false
 
 let rec extendDown (it : CatItem) (stack : Cat) : Cat = 
-    match stack with 
-    | (UnfinishedListItem unfinished) :: rest -> 
-        (UnfinishedListItem (extendDown it unfinished)) :: rest
-    | (UnfinishedProcItem unfinished) :: rest -> 
-        (UnfinishedProcItem (extendDown it unfinished)) :: rest
-    | _ -> it :: stack
+    printfn "extendDown %A %A" it stack
+    let result = 
+        match stack with 
+        | (UnfinishedListItem unfinished) :: rest -> 
+            (UnfinishedListItem (extendDown it unfinished)) :: rest
+        | (UnfinishedProcItem unfinished) :: rest -> 
+            (UnfinishedProcItem (extendDown it unfinished)) :: rest
+        | _ ->
+            it :: stack
+    printfn "extendDown result %A" result
+    result
 
 let extend (it : CatItem) (stack : Cat) : PushResult = 
     Extension (extendDown it stack)
