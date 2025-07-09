@@ -14,7 +14,6 @@ let createOplink (url : string) name =
     let result = sprintf "<a href=\"%s\">%s</a>" href name
     result
 
-
 let toInput (element : string) : Input = 
     printfn "element -> input %s" element
     match System.Int32.TryParse element with
@@ -161,7 +160,7 @@ let rec toStackString (depth : int) (elements : string list) (items : CatItem li
 
 let createStackDiv stack =
     let stackString = toStackString 0 [] stack
-    div [ attr "style" "width:200px;overflow:auto" ] [
+    div [ attr "style" "width:300px;overflow:auto" ] [
         div [] [
             h3 [] [ str "Stack" ]
             pre [ attr "style" "font-family:Consolas" ] [ str stackString ]
@@ -190,7 +189,7 @@ let createDoc stack =
                             td [ attr "width" "200" ] [
                                 operationsDiv
                             ]
-                            td [ attr "width" "200" ] [
+                            td [ attr "width" "300" ] [
                                 stackDiv
                             ]
                         ]

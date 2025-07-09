@@ -96,6 +96,11 @@ let rec twoBlocks stack =
     | ProcItem _ :: ProcItem _ :: _ -> true 
     | _ -> false
 
+let rec mapPrecond stack = 
+    match stack with 
+    | ListItem _ :: ProcItem _ :: _ -> true 
+    | _ -> false
+
 let rec consPrecond stack = 
     match stack with 
     | ListItem _ :: _ :: _ -> true 
@@ -154,7 +159,7 @@ let preconds : (string * (Cat -> bool)) list =
       ("tail", nonEmptyBlock)
       ("cons", consPrecond)
       ("rev", oneBlock)
-    //   ("map", twoBlocks)
+      ("map", mapPrecond)
       ("split", twoStrings)
       ("exec", execPrecond)
       ("flatten", flattenPrecond)

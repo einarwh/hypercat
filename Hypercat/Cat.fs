@@ -234,24 +234,27 @@ let flatten (stack : Cat) : Cat =
 let mapItem (codeBlock : CatItem list) (item : CatItem) : CatItem list = 
     [ NameItem "exec"; ProcItem codeBlock; item ]
 
-let executeMap (dataBlock : CatItem list) (codeBlock : CatItem list) : CatItem list = 
+let executeMap (dataBlock : CatItem list) (codeBlock : CatItem list) : CatItem = 
     let rec fn (stack : CatItem list) (dataItems : CatItem list) = 
         match dataItems with 
-        | [] -> stack 
+        | [] -> stack
         | item :: rest -> 
-            let added = NameItem "cons" :: NameItem "swap" :: NameItem "exec" :: ProcItem codeBlock :: item :: stack
+            let added = NameItem "exec" :: ProcItem codeBlock :: item :: stack
+            printfn "added %A" added
             fn added rest
-    fn ([ProcItem []]) dataBlock
+    let items = fn [] (dataBlock |> List.rev)
+    ListItem items
 
 let map (stack : Cat) : Cat = 
-   match stack with 
+    printfn "map %A" stack
+    match stack with 
     | a :: b :: rest -> 
         match (a, b) with 
-        | ProcItem dataBlock, ProcItem codeBlock -> 
+        | ListItem dataBlock, ProcItem codeBlock -> 
             let emptyBlock = ProcItem []
             let resultBlock = dataBlock |> List.collect (fun item -> mapItem codeBlock item)
             let resBlock = executeMap dataBlock codeBlock 
-            resBlock @ rest 
+            resBlock :: rest 
         | _ -> raise (TypeError "map")
     | _ -> raise (StackUnderflowError "map")
 
@@ -265,6 +268,7 @@ let zero (stack : Cat) : Cat =
     stack |> push (IntItem 0) 
 
 let succ (stack : Cat) : Cat = 
+    printfn "succ %A" stack
     match stack with 
     | a :: rest -> 
         match a with 
@@ -330,10 +334,14 @@ let lookupProc name =
     | Some (n, op) -> op
     | None -> failwith <| sprintf "Unknown operation %s" name
 
-let isInsideUnfinishedProc (stack : Cat) = 
+let rec isInsideUnfinishedProc (stack : Cat) = 
     match stack with 
-    | UnfinishedProcItem _ :: _ -> true 
-    | _ -> false
+    | UnfinishedProcItem _ :: _ -> 
+        true 
+    | UnfinishedListItem lst :: _ -> 
+        isInsideUnfinishedProc lst
+    | _ ->
+        false
 
 let rec extendDown (it : CatItem) (stack : Cat) : Cat = 
     match stack with 
@@ -375,23 +383,36 @@ let rec endProc (item : CatItem) : CatItem =
         | (UnfinishedListItem innerLst) :: rest -> 
             UnfinishedListItem ((endProc (UnfinishedListItem innerLst)) :: rest)
         | (UnfinishedProcItem innerPrc) :: rest -> 
-            UnfinishedProcItem ((endProc (UnfinishedProcItem innerPrc)) :: rest)
+            UnfinishedListItem ((endProc (UnfinishedProcItem innerPrc)) :: rest)
         | _ -> ListItem lst 
     | UnfinishedProcItem prc -> 
         match prc with 
         | (UnfinishedListItem innerLst) :: rest -> 
-            UnfinishedListItem ((endProc (UnfinishedListItem innerLst)) :: rest)
+            UnfinishedProcItem ((endProc (UnfinishedListItem innerLst)) :: rest)
         | (UnfinishedProcItem innerPrc) :: rest -> 
             UnfinishedProcItem ((endProc (UnfinishedProcItem innerPrc)) :: rest)
         | _ -> ProcItem prc 
     | _ -> failwith "must be unfinished proc"
 
 let rec eval (op : Cat -> Cat) (stack : Cat) : Cat = 
+    printfn "eval %A" stack
     match stack with 
     | UnfinishedListItem innerStack :: rest ->
         (UnfinishedListItem (eval op innerStack)) :: rest
     | _ -> 
         op stack 
+
+let rec execute (stack : Cat) = 
+    printfn "execute stack %A" stack
+    match stack with 
+    | ProcItem prc :: rest -> 
+        Execution (rest, toInputs [] prc)
+    | UnfinishedListItem listStack :: rest -> 
+        match execute listStack with 
+        | Execution (r, inputs) -> 
+            Execution (UnfinishedListItem r :: rest, inputs)
+        | _ -> failwith "unknown error in exec"
+    | _ -> failwith "type error in exec"
 
 let pushInput (e : Input) (stack : Cat) : PushResult =
     match e with 
@@ -410,13 +431,11 @@ let pushInput (e : Input) (stack : Cat) : PushResult =
             Extension (endProc (UnfinishedProcItem prc) :: rest)
         | _ -> failwith "unexpected end!"
     | NameInput name when name = "exec" -> 
+        printfn "exec %A" stack
         if isInsideUnfinishedProc stack then 
             extend (NameItem name) stack 
         else 
-            match stack with 
-            | ProcItem prc :: rest -> 
-                Execution (rest, toInputs [] prc)
-            | _ -> failwith "type error in exec"
+            execute stack
     | NameInput name when name = "if" -> 
         if isInsideUnfinishedProc stack then 
             extend (NameItem name) stack 
