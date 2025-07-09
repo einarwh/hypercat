@@ -182,6 +182,9 @@ let preconds : (string * (Cat -> bool)) list =
       ("end", endPrecond)
     ]
 
+let lookupPrecond (name : string) : Cat -> bool = 
+    preconds |> List.find (fun (n, p) -> n = name) |> snd
+
 let legalOps (stack : Cat) : string list = 
     let st = 
         match stack with 
