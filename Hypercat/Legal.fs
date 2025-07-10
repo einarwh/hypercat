@@ -61,6 +61,13 @@ let rec twoBools stack =
     | BoolItem _ :: BoolItem _ :: _ -> true 
     | _ -> false
 
+let rec twoPrimitiveValuesOfSameType stack = 
+    match stack with 
+    | IntItem _ :: IntItem _ :: _ -> true 
+    | BoolItem _ :: BoolItem _ :: _ -> true 
+    | StringItem _ :: StringItem _ :: _ -> true 
+    | _ -> false
+
 let oneString stack = 
     match stack with 
     | StringItem _ :: _ -> true 
@@ -158,8 +165,8 @@ let preconds : (string * (Cat -> bool)) list =
       ("neg", oneInt)
       ("eq", twoArgs)
       ("ne", twoArgs)
-      ("gt", twoInts)
-      ("lt", twoInts)
+      ("gt", twoPrimitiveValuesOfSameType)
+      ("lt", twoPrimitiveValuesOfSameType)
       ("not", oneBool)
       ("and", twoBools)
       ("or", twoBools)

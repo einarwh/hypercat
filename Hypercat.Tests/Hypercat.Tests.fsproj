@@ -23,6 +23,7 @@
     <Compile Include="NegTests.fs" />
     <Compile Include="EqTests.fs" />
     <Compile Include="NeTests.fs" />
+    <Compile Include="GtTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
