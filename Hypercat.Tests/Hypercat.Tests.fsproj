@@ -31,6 +31,7 @@
     <Compile Include="XorTests.fs" />
     <Compile Include="SplitTests.fs" />
     <Compile Include="IntTests.fs" />
+    <Compile Include="RevTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

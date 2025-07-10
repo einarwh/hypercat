@@ -210,11 +210,17 @@ let tail (stack : Cat) : Cat =
         | _ -> raise (TypeError "tail")
     | _ -> raise (StackUnderflowError "tail")
 
+let reverseString (s : string) = 
+    let charArray = s.ToCharArray()
+    Array.Reverse(charArray)
+    new string(charArray)
+
 let rev (stack : Cat) : Cat = 
    match stack with 
     | a :: rest -> 
         match a with 
         | ListItem block -> (ListItem (List.rev block)) :: rest
+        | StringItem str -> (StringItem (reverseString str)) :: rest
         | ProcItem block -> (ProcItem (List.rev block)) :: rest
         | _ -> raise (TypeError "rev")
     | _ -> raise (StackUnderflowError "rev")
