@@ -20,6 +20,7 @@
     <Compile Include="ZeroTests.fs" />
     <Compile Include="SuccTests.fs" />
     <Compile Include="PredTests.fs" />
+    <Compile Include="NegTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
