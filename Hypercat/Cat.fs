@@ -182,14 +182,15 @@ let head (stack : Cat) : Cat =
    match stack with 
     | a :: rest -> 
         match a with 
+        | StringItem str ->
+            if str = "" then 
+                raise (Exception "Empty string has no head")
+            else 
+                StringItem (str[0].ToString()) :: rest
         | ListItem block ->
             match block with 
+            | [] -> raise (Exception "Empty list has no head")
             | h :: _ -> h :: rest 
-            | _ -> raise (StackUnderflowError "head")
-        | ProcItem block ->
-            match block with 
-            | h :: _ -> h :: rest 
-            | _ -> raise (StackUnderflowError "head")
         | _ -> raise (TypeError "head")
     | _ -> raise (StackUnderflowError "head")
 

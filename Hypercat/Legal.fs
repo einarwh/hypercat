@@ -108,6 +108,12 @@ let rec nonEmptyBlock stack =
     | ProcItem (_ :: _) :: _ -> true 
     | _ -> false
 
+let rec nonEmptyListOrString stack = 
+    match stack with 
+    | ListItem (_ :: _) :: _ -> true 
+    | StringItem str :: _ -> str.Length > 0 
+    | _ -> false
+
 let rec twoBlocks stack = 
     match stack with 
     | ListItem _ :: ListItem _ :: _ -> true 
@@ -178,7 +184,7 @@ let preconds : (string * (Cat -> bool)) list =
       ("or", twoBools)
       ("xor", twoBools)
       ("concat", twoBlocks)
-      ("head", nonEmptyBlock)
+      ("head", nonEmptyListOrString)
       ("tail", nonEmptyBlock)
       ("cons", consPrecond)
       ("rev", oneListOrString)

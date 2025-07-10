@@ -28,7 +28,7 @@ let ``Rev on string yields reversed string`` () =
     testRev [ StringItem "123" ] [ StringItem "321" ]
 
 [<Fact>]
-let ``Rev on list yields reversed string`` () =
+let ``Rev on list yields reversed list`` () =
     testRev 
         [ ListItem [ IntItem 0; BoolItem true; StringItem "x" ] ] 
         [ ListItem [ StringItem "x"; BoolItem true; IntItem 0 ] ]
