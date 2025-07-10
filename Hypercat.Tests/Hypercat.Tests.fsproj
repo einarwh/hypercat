@@ -26,6 +26,7 @@
     <Compile Include="GtTests.fs" />
     <Compile Include="LtTests.fs" />
     <Compile Include="NotTests.fs" />
+    <Compile Include="AndTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
