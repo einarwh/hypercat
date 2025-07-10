@@ -5,51 +5,49 @@ open Xunit
 open Legal
 open Cat
 
-let testAdd n1 n2 sum = 
-    match pushInput (IntInput n1) [] with 
-    | Extension [ IntItem n1 ] ->
-        match pushInput (IntInput n2) [ IntItem n1 ] with 
-        | Extension [ IntItem n2; IntItem n1 ] ->
-            match pushInput (NameInput "add") [ IntItem n2; IntItem n1 ] with 
-            | Reduction [ IntItem sum ] -> Assert.True(true)
-            | _ -> failwith "??"
-        | _ -> failwith "??"
-    | _ -> failwith "??"
+let testSwap (originalStack : Cat) (expectedStack : Cat) = 
+    match pushInput (NameInput "swap") originalStack with 
+    | Reduction actualStack ->
+        Assert.Equal<Cat>(expectedStack, actualStack)
+    | result -> 
+        failwith <| sprintf "unexpected result %A" result
 
-let testAddLegal stack = 
-    Assert.True(stack |> lookupPrecond "add")
+let testSwapLegal stack = 
+    Assert.True(stack |> lookupPrecond "swap")
 
-let testAddIllegal stack = 
-    Assert.False(stack |> lookupPrecond "add")
+let testSwapIllegal stack = 
+    Assert.False(stack |> lookupPrecond "swap")
 
 [<Fact>]
-let ``Add 2 and 1`` () =
-    testAdd 2 1 3
+let ``Swap on empty stack throws stack underflow error`` () =
+    let call = (fun () -> testSwap [] [])
+    Assert.Throws<StackUnderflowError>(call)
 
 [<Fact>]
-let ``Add 22 and 18`` () =
-    testAdd 22 18 40
+let ``Swap on stack with one item throws stack underflow error`` () =
+    let call = (fun () -> testSwap [ IntItem 1 ] [])
+    Assert.Throws<StackUnderflowError>(call)
 
 [<Fact>]
-let ``Add -5 and 5`` () =
-    testAdd -5 5 0
+let ``Swap on stack with two items swaps them`` () =
+    testSwap [ IntItem 0; StringItem "s" ] [ StringItem "s"; IntItem 0 ]
 
 [<Fact>]
-let ``Add is legal given [ 1 2 ]`` () =
-    testAddLegal [ IntItem 1; IntItem 2 ] 
+let ``Swap on stack with three items swaps top two`` () =
+    testSwap [ IntItem 0; StringItem "s"; IntItem 2 ] [ StringItem "s"; IntItem 0; IntItem 2 ]
 
 [<Fact>]
-let ``Add is legal given [ 1 2 ... ]`` () =
-    testAddLegal [ IntItem 1; IntItem 2; StringItem "???" ]
+let ``Swap is legal given stack with two items`` () =
+    testSwapLegal [ IntItem 1; StringItem "x" ] 
 
 [<Fact>]
-let ``Add is illegal given [ 1 false ]`` () =
-    testAddIllegal [ IntItem 1; BoolItem false ]
+let ``Swap is legal given stack with three items`` () =
+    testSwapLegal [ IntItem 1; StringItem "x"; StringItem "x" ] 
 
 [<Fact>]
-let ``Add is illegal given [ true 1 ]`` () =
-    testAddIllegal [ BoolItem true ; IntItem 1 ]
+let ``Swap is illegal given empty stack`` () =
+    testSwapIllegal [] 
 
 [<Fact>]
-let ``Add is illegal given [ 1 ]`` () =
-    testAddIllegal [ IntItem 1 ] 
+let ``Swap is illegal given stack with one item`` () =
+    testSwapIllegal [ IntItem 0 ] 
