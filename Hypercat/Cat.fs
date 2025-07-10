@@ -132,6 +132,8 @@ let lt (stack : Cat) : Cat =
     | a :: b :: rest -> 
         match (a, b) with 
         | IntItem n1, IntItem n2 -> BoolItem (n2 < n1) :: rest
+        | BoolItem b1, BoolItem b2 -> BoolItem (b2 < b1) :: rest
+        | StringItem s1, StringItem s2 -> BoolItem (s2 < s1) :: rest
         | _ -> raise (TypeError "lt")
     | _ -> raise (StackUnderflowError "lt")
 
