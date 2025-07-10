@@ -40,5 +40,13 @@ let ``Dup is legal given non-empty stack`` () =
     testDupLegal [ IntItem 1 ] 
 
 [<Fact>]
+let ``Dup is legal given list marker`` () =
+    testDupLegal [ ListMarker ] 
+
+[<Fact>]
+let ``Dup is illegal given proc marker`` () =
+    testDupIllegal [ ProcMarker ] 
+
+[<Fact>]
 let ``Dup is illegal given empty stack`` () =
     testDupIllegal [] 

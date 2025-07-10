@@ -36,5 +36,13 @@ let ``Pop is legal given non-empty stack`` () =
     testPopLegal [ IntItem 1 ] 
 
 [<Fact>]
+let ``Pop is legal given list marker`` () =
+    testPopLegal [ ListMarker ] 
+
+[<Fact>]
+let ``Pop is illegal given proc marker`` () =
+    testPopIllegal [ ProcMarker ] 
+
+[<Fact>]
 let ``Pop is illegal given empty stack`` () =
     testPopIllegal [] 

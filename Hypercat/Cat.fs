@@ -12,11 +12,11 @@ type CatItem =
     IntItem of int 
     | BoolItem of bool 
     | NameItem of string 
-    | StringItem of string 
+    | StringItem of string
+    | ListMarker 
     | ListItem of Cat
-    | UnfinishedListItem of Cat
+    | ProcMarker
     | ProcItem of Cat 
-    | UnfinishedProcItem of Cat 
 and Cat = CatItem list
 
 type PushResult = Reduction of Cat | Extension of Cat | Execution of Cat * Input list 
@@ -38,20 +38,9 @@ let pop (stack : Cat) : Cat =
     | a :: rest -> rest 
     | _ -> raise (StackUnderflowError "pop")
 
-let rec dropInnermost (stack : Cat) : Cat = 
-    match stack with 
-    | UnfinishedProcItem [] :: rest -> rest 
-    | UnfinishedProcItem prc :: rest -> UnfinishedProcItem (dropInnermost prc) :: rest 
-    | _ :: rest -> rest 
-    | [] -> failwith "should never be empty!"
-
 let drop (stack : Cat) : Cat = 
     match stack with 
-    | a :: rest ->
-        match a with 
-        | UnfinishedProcItem unfinished -> 
-            dropInnermost stack 
-        | _ -> raise (TypeError "drop")
+    | a :: rest -> rest
     | _ -> raise (StackUnderflowError "drop")
 
 let push (e : CatItem) (stack : Cat) : Cat =
@@ -386,115 +375,77 @@ let lookupProc name =
     | Some (n, op) -> op
     | None -> failwith <| sprintf "Unknown operation %s" name
 
-let rec isInsideUnfinishedProc (stack : Cat) = 
+let rec isInsideProc (stack : Cat) = 
     match stack with 
-    | UnfinishedProcItem _ :: _ -> 
-        true 
-    | UnfinishedListItem lst :: _ -> 
-        isInsideUnfinishedProc lst
-    | _ ->
-        false
-
-let rec extendDown (it : CatItem) (stack : Cat) : Cat = 
-    printfn "extendDown %A %A" it stack
-    let result = 
-        match stack with 
-        | (UnfinishedListItem unfinished) :: rest -> 
-            (UnfinishedListItem (extendDown it unfinished)) :: rest
-        | (UnfinishedProcItem unfinished) :: rest -> 
-            (UnfinishedProcItem (extendDown it unfinished)) :: rest
-        | _ ->
-            it :: stack
-    printfn "extendDown result %A" result
-    result
+    | [] -> false
+    | ProcMarker :: _ -> true
+    | _ :: rest -> isInsideProc rest
 
 let extend (it : CatItem) (stack : Cat) : PushResult = 
-    Extension (extendDown it stack)
+    Extension (it :: stack)
 
 let rec toInputs (inputs : Input list) (items : CatItem list) : Input list = 
     match items with 
     | [] -> inputs // Rev?
     | it :: rest -> 
         match it with 
-        | IntItem n -> toInputs (IntInput n :: inputs) rest
-        | BoolItem b -> toInputs (BoolInput b :: inputs) rest
-        | NameItem name -> toInputs (NameInput name :: inputs) rest 
-        | StringItem str -> toInputs (StringInput str :: inputs) rest 
+        | IntItem n -> 
+            toInputs (IntInput n :: inputs) rest
+        | BoolItem b -> 
+            toInputs (BoolInput b :: inputs) rest
+        | NameItem name -> 
+            toInputs (NameInput name :: inputs) rest 
+        | StringItem str -> 
+            toInputs (StringInput str :: inputs) rest 
         | ListItem listItems -> 
             let listInputs = [ NameInput "list" ] @ toInputs [] listItems @ [ NameInput "end" ]
             toInputs (listInputs @ inputs) rest 
-        | UnfinishedListItem listItems -> 
-            let listInputs = [ NameInput "proc" ] @ toInputs [] listItems
-            toInputs (listInputs @ inputs) rest 
+        | ListMarker -> 
+            toInputs (NameInput "list" :: inputs) rest 
         | ProcItem procItems -> 
             let procInputs = [ NameInput "proc" ] @ toInputs [] procItems @ [ NameInput "end" ]
             toInputs (procInputs @ inputs) rest 
-        | UnfinishedProcItem procItems -> 
-            let procInputs = [ NameInput "proc" ] @ toInputs [] procItems
-            toInputs (procInputs @ inputs) rest 
+        | ProcMarker -> 
+            toInputs (NameInput "proc" :: inputs) rest 
 
-let rec endProc (item : CatItem) : CatItem = 
-    match item with 
-    | UnfinishedListItem lst -> 
-        match lst with 
-        | (UnfinishedListItem innerLst) :: rest -> 
-            UnfinishedListItem ((endProc (UnfinishedListItem innerLst)) :: rest)
-        | (UnfinishedProcItem innerPrc) :: rest -> 
-            UnfinishedListItem ((endProc (UnfinishedProcItem innerPrc)) :: rest)
-        | _ -> ListItem lst 
-    | UnfinishedProcItem prc -> 
-        match prc with 
-        | (UnfinishedListItem innerLst) :: rest -> 
-            UnfinishedProcItem ((endProc (UnfinishedListItem innerLst)) :: rest)
-        | (UnfinishedProcItem innerPrc) :: rest -> 
-            UnfinishedProcItem ((endProc (UnfinishedProcItem innerPrc)) :: rest)
-        | _ -> ProcItem prc 
-    | _ -> failwith "must be unfinished proc"
-
-let rec eval (op : Cat -> Cat) (stack : Cat) : Cat = 
-    printfn "eval %A" stack
-    match stack with 
-    | UnfinishedListItem innerStack :: rest ->
-        (UnfinishedListItem (eval op innerStack)) :: rest
-    | _ -> 
-        op stack 
-
-let rec execute (stack : Cat) = 
-    printfn "execute stack %A" stack
+let rec executeProc (stack : Cat) = 
     match stack with 
     | ProcItem prc :: rest -> 
         Execution (rest, toInputs [] prc)
-    | UnfinishedListItem listStack :: rest -> 
-        match execute listStack with 
-        | Execution (r, inputs) -> 
-            Execution (UnfinishedListItem r :: rest, inputs)
-        | _ -> failwith "unknown error in exec"
     | _ -> failwith "type error in exec"
+
+let endBlock (stack : Cat) : Cat = 
+    let rec findMarker (blockItems : CatItem list) (stack : Cat) = 
+        match stack with 
+        | [] -> failwith "no marker found"
+        | ListMarker :: rest -> 
+            ListItem (List.rev blockItems) :: rest 
+        | ProcMarker :: rest -> 
+            ProcItem (List.rev blockItems) :: rest 
+        | item :: rest -> 
+            findMarker (item :: blockItems) rest
+    findMarker [] stack
 
 let pushInput (e : Input) (stack : Cat) : PushResult =
     match e with 
     | IntInput n -> extend (IntItem n) stack 
     | BoolInput b -> extend (BoolItem b) stack 
     | StringInput s -> extend (StringItem s) stack 
+    | NameInput name when name = "clear" -> 
+        Extension []
     | NameInput name when name = "proc" -> 
-        extend (UnfinishedProcItem []) stack
+        extend (ProcMarker) stack
     | NameInput name when name = "list" -> 
-        extend (UnfinishedListItem []) stack
+        extend (ListMarker) stack
     | NameInput name when name = "end" -> 
-        match stack with 
-        | UnfinishedListItem items :: rest -> 
-            Extension (endProc (UnfinishedListItem items) :: rest)
-        | UnfinishedProcItem prc :: rest -> 
-            Extension (endProc (UnfinishedProcItem prc) :: rest)
-        | _ -> failwith "unexpected end!"
+        Extension (endBlock stack)
     | NameInput name when name = "exec" -> 
-        printfn "exec %A" stack
-        if isInsideUnfinishedProc stack then 
+        if isInsideProc stack then 
             extend (NameItem name) stack 
         else 
-            execute stack
+            executeProc stack
     | NameInput name when name = "if" -> 
-        if isInsideUnfinishedProc stack then 
+        if isInsideProc stack then 
             extend (NameItem name) stack 
         else 
             match stack with 
@@ -506,7 +457,7 @@ let pushInput (e : Input) (stack : Cat) : PushResult =
                 | _ -> failwith "type error in if" 
             | _ -> failwith "stack underflow in if"
     | NameInput name when name = "ifelse" -> 
-        if isInsideUnfinishedProc stack then 
+        if isInsideProc stack then 
             extend (NameItem name) stack 
         else 
             match stack with 
@@ -517,11 +468,13 @@ let pushInput (e : Input) (stack : Cat) : PushResult =
                     else Execution (rest, toInputs [] elseProc)
                 | _ -> failwith "type error in ifelse" 
             | _ -> failwith "stack underflow in ifelse"
+    | NameInput name when name = "drop" -> 
+        let op = lookupProc name 
+        Reduction (op stack)
     | NameInput name -> 
-        if name <> "drop" && isInsideUnfinishedProc stack then 
+        if isInsideProc stack then 
             extend (NameItem name) stack 
         else 
             // Lookup
             let op = lookupProc name 
-            let stack' = eval op stack
-            Reduction stack'
+            Reduction (op stack)

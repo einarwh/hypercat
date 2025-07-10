@@ -3,36 +3,9 @@ module Legal
 open Cat
 open System
 
-let unrollUnfinished stack = 
-    let rec fn acc st = 
-        match st with 
-        | UnfinishedListItem listStack :: rest -> 
-            (fn acc listStack @ rest)
-        | UnfinishedProcItem procStack :: rest -> 
-            (fn acc procStack @ rest)
-        | _ -> 
-            acc @ st 
-    fn [] stack
-
-let simulate (stack : Cat) (unrolled : CatItem list) = 
-    let rec apply (stack : Cat) (inputs : Input list) = 
-        match inputs with 
-        | [] -> 
-            stack 
-        | h :: rest -> 
-            let result = pushInput h stack 
-            match result with 
-            | Reduction st -> 
-                apply st rest 
-            | Extension st -> 
-                apply st rest
-            | Execution (st, procInputs) -> 
-                apply st (procInputs @ rest)
-    let inputs = toInputs [] unrolled 
-    apply stack inputs
-
 let rec oneArg stack = 
     match stack with 
+    | ProcMarker :: _ -> false
     | a :: _ -> true 
     | _ -> false
 
@@ -152,25 +125,31 @@ let rec ifelsePrecond stack =
     | ProcItem _ :: ProcItem _ :: BoolItem _ :: _ -> true 
     | _ -> false
 
-let endPrecond stack = 
-    printfn "endPrecond %A" stack
+let rec containsListMarker (stack : Cat) = 
     match stack with 
-    | UnfinishedListItem _ :: _ -> true 
-    | UnfinishedProcItem _ :: _ -> true 
-    | _ -> false
+    | [] -> false
+    | ListMarker :: _ -> true
+    | _ :: rest -> containsListMarker rest
 
-let dropPrecond stack = 
-    printfn "dropPrecond %A" stack
+let rec containsProcMarker (stack : Cat) = 
     match stack with 
-    | UnfinishedProcItem (_ :: _) :: _ -> true 
-    | _ -> false
+    | [] -> false
+    | ProcMarker :: _ -> true
+    | _ :: rest -> containsProcMarker rest
+
+let rec containsAnyMarker (stack : Cat) = 
+    match stack with 
+    | [] -> false
+    | ProcMarker :: _ -> true
+    | ListMarker :: _ -> true
+    | _ :: rest -> containsAnyMarker rest
 
 let preconds : (string * (Cat -> bool)) list = 
     [ ("clear", noPrecond)
       ("swap", twoArgs)
       ("dup", oneArg)
       ("pop", oneArg)
-      ("drop", dropPrecond)
+      ("drop", containsProcMarker)
       ("add", twoInts)
       ("sub", twoInts)
       ("mul", twoInts)
@@ -204,27 +183,13 @@ let preconds : (string * (Cat -> bool)) list =
       ("ifelse", ifelsePrecond)
       ("proc", noPrecond)
       ("list", noPrecond)
-      ("end", endPrecond)
+      ("end", containsAnyMarker)
     ]
 
 let lookupPrecond (name : string) : Cat -> bool = 
     preconds |> List.find (fun (n, p) -> n = name) |> snd
 
 let legalOps (stack : Cat) : string list = 
-    let st = 
-        match stack with 
-        | UnfinishedListItem listStack :: rest -> 
-            let unrolled = unrollUnfinished listStack
-            simulate rest unrolled
-        | UnfinishedProcItem procStack :: rest -> 
-            let unrolled = unrollUnfinished procStack
-            simulate rest unrolled
-        | _ -> 
-            stack
     let check (name, precond) = 
-        let stk = 
-            if name = "end" then stack 
-            else if name = "drop" then stack
-            else st
-        if precond stk then Some name else None 
+        if containsProcMarker stack || precond stack then Some name else None 
     preconds |> List.choose check

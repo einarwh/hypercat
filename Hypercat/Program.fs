@@ -66,15 +66,13 @@ let rec toUrl (elements : string list) (items : CatItem list) : string =
         | ListItem listItems -> 
             let s = "list" + "/" + toUrl [] listItems + "/" + "end"
             toUrl (s :: elements) rest 
-        | UnfinishedListItem listItems -> 
-            let s = "list" + "/" + toUrl [] listItems
-            toUrl (s :: elements) rest 
+        | ListMarker -> 
+            toUrl ("list" :: elements) rest 
         | ProcItem procItems -> 
             let s = "proc" + "/" + toUrl [] procItems + "/" + "end"
             toUrl (s :: elements) rest 
-        | UnfinishedProcItem procItems -> 
-            let s = "proc" + "/" + toUrl [] procItems
-            toUrl (s :: elements) rest 
+        | ProcMarker -> 
+            toUrl ("proc" :: elements) rest 
 
 let rec applyInputs (stack : Cat) (inputs : Input list)  = 
     match inputs with 
@@ -144,19 +142,15 @@ let rec toStackString (depth : int) (elements : string list) (items : CatItem li
                 if List.isEmpty listItems then "end" + "\n" + indentation + "list"
                 else "end" + "\n" + toStackString (depth + 1) [] listItems + "\n" + indentation + "list"
             toStackString depth (s :: elements) rest 
-        | UnfinishedListItem listItems -> 
-            let unfinished = toStackString (depth + 1) [] listItems
-            let s = if unfinished = String.Empty then "list" else unfinished + "\n" + "list"
-            toStackString depth (s :: elements) rest
+        | ListMarker -> 
+            toStackString depth ("list" :: elements) rest
         | ProcItem procItems -> 
             let s = 
                 if List.isEmpty procItems then "end" + "\n" + indentation + "proc"
                 else "end" + "\n" + toStackString (depth + 1) [] procItems + "\n" + indentation + "proc"
             toStackString depth (s :: elements) rest 
-        | UnfinishedProcItem procItems -> 
-            let unfinished = toStackString (depth + 1) [] procItems
-            let s = if unfinished = String.Empty then "proc" else unfinished + "\n" + "proc"
-            toStackString depth (s :: elements) rest
+        | ProcMarker -> 
+            toStackString depth ("proc" :: elements) rest
 
 let createStackDiv stack =
     let stackString = toStackString 0 [] stack
