@@ -22,8 +22,8 @@ let testAndIllegal stack =
 let ``And - all four combinations`` () =
     testAnd [ BoolItem true; BoolItem true ] [ BoolItem true ]
     testAnd [ BoolItem false; BoolItem true ] [ BoolItem false ]
-    testAnd [ BoolItem false; BoolItem false ] [ BoolItem false ]
     testAnd [ BoolItem true; BoolItem false ] [ BoolItem false ]
+    testAnd [ BoolItem false; BoolItem false ] [ BoolItem false ]
 
 [<Fact>]
 let ``And with stack underflow error`` () =
