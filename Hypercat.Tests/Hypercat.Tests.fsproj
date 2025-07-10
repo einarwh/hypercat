@@ -12,6 +12,7 @@
     <Compile Include="PopTests.fs" />
     <Compile Include="DupTests.fs" />
     <Compile Include="SwapTests.fs" />
+    <Compile Include="SuccTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
