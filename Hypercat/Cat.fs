@@ -158,6 +158,15 @@ let xorOp (stack : Cat) : Cat =
         | _ -> raise (TypeError "xor")
     | _ -> raise (StackUnderflowError "xor")
 
+let len (stack : Cat) : Cat = 
+   match stack with 
+    | a :: rest -> 
+        match a with 
+        | StringItem str -> IntItem (str.Length) :: rest
+        | ListItem block -> IntItem (List.length block) :: rest
+        | _ -> raise (TypeError "len")
+    | _ -> raise (StackUnderflowError "len")
+
 let concat (stack : Cat) : Cat = 
    match stack with 
     | a :: b :: rest -> 
@@ -360,6 +369,7 @@ let ops : (string * (Cat -> Cat)) list =
       ("xor", xorOp)
       ("split", split)
       ("int", intOp)
+      ("len", len)
       ("concat", concat)
       ("head", head)
       ("tail", tail)

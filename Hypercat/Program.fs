@@ -143,14 +143,14 @@ let rec toStackString (depth : int) (elements : string list) (items : CatItem li
                 else "end" + "\n" + toStackString (depth + 1) [] listItems + "\n" + indentation + "list"
             toStackString depth (s :: elements) rest 
         | ListMarker -> 
-            toStackString depth ("list" :: elements) rest
+            toStackString depth ("-list-" :: elements) rest
         | ProcItem procItems -> 
             let s = 
                 if List.isEmpty procItems then "end" + "\n" + indentation + "proc"
                 else "end" + "\n" + toStackString (depth + 1) [] procItems + "\n" + indentation + "proc"
             toStackString depth (s :: elements) rest 
         | ProcMarker -> 
-            toStackString depth ("proc" :: elements) rest
+            toStackString depth ("-proc-" :: elements) rest
 
 let createStackDiv stack =
     let stackString = toStackString 0 [] stack

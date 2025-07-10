@@ -169,6 +169,7 @@ let preconds : (string * (Cat -> bool)) list =
       ("or", twoBools)
       ("xor", twoBools)
       ("concat", twoListsOrStrings)
+      ("len", oneListOrString)
       ("head", nonEmptyListOrString)
       ("tail", nonEmptyListOrString)
       ("cons", consPrecond)
