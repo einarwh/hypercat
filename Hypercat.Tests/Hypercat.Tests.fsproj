@@ -13,6 +13,7 @@
     <Compile Include="DupTests.fs" />
     <Compile Include="SwapTests.fs" />
     <Compile Include="SuccTests.fs" />
+    <Compile Include="PredTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
