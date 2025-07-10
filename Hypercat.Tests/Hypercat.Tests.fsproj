@@ -37,6 +37,7 @@
     <Compile Include="ConcatTests.fs" />
     <Compile Include="FlattenTests.fs" />
     <Compile Include="MapTests.fs" />
+    <Compile Include="ReduceTests.fs" />
     <Compile Include="RevTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

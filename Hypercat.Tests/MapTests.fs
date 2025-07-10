@@ -53,13 +53,16 @@ let ``Map with an empty proc`` () =
 [<Fact>]
 let ``Map with non-empty list and non-empty proc`` () =
     testMap 
-        [ ListItem [ IntItem 0; IntItem 1 ]; ProcItem [ NameItem "succ" ] ]     
+        [ ListItem [ IntItem 1; IntItem 2; IntItem 3 ]; ProcItem [ NameItem "succ" ] ]     
         [ ListItem [ NameItem "exec"
                      ProcItem [ NameItem "succ" ]
-                     IntItem 0 
+                     IntItem 1 
                      NameItem "exec"
                      ProcItem [ NameItem "succ" ]
-                     IntItem 1 ] ]
+                     IntItem 2
+                     NameItem "exec"
+                     ProcItem [ NameItem "succ" ]
+                     IntItem 3 ] ]
 
 [<Fact>]
 let ``Map is legal given stack with list and proc`` () =
