@@ -24,7 +24,7 @@ let ``Eq 1 and 1 is true`` () =
 
 [<Fact>]
 let ``Eq "x" and "x" is true`` () =
-    testEq [ StringItem "x"; StringItem "x" ] false
+    testEq [ StringItem "x"; StringItem "x" ] true
 
 [<Fact>]
 let ``Eq "x" and "y" is false`` () =
