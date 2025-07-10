@@ -35,6 +35,7 @@
     <Compile Include="TailTests.fs" />
     <Compile Include="ConsTests.fs" />
     <Compile Include="ConcatTests.fs" />
+    <Compile Include="FlattenTests.fs" />
     <Compile Include="RevTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
