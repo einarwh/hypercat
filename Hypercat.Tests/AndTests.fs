@@ -19,7 +19,7 @@ let testAndIllegal stack =
     Assert.False(stack |> lookupPrecond "and")
 
 [<Fact>]
-let ``All four combinations`` () =
+let ``And - all four combinations`` () =
     testAnd [ BoolItem true; BoolItem true ] [ BoolItem true ]
     testAnd [ BoolItem false; BoolItem true ] [ BoolItem false ]
     testAnd [ BoolItem false; BoolItem false ] [ BoolItem false ]
