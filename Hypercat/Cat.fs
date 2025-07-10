@@ -362,6 +362,8 @@ let ops : (string * (Cat -> Cat)) list =
       ("and", andOp)
       ("or", orOp)
       ("xor", xorOp)
+      ("split", split)
+      ("int", intOp)
       ("concat", concat)
       ("head", head)
       ("tail", tail)
@@ -370,8 +372,6 @@ let ops : (string * (Cat -> Cat)) list =
       ("rev", rev)
       ("map", map)
       ("reduce", reduce)
-      ("split", split)
-      ("int", intOp)
     ]
 
 let lookupProc name = 
