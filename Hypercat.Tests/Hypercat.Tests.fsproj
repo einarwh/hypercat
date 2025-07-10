@@ -33,6 +33,7 @@
     <Compile Include="IntTests.fs" />
     <Compile Include="HeadTests.fs" />
     <Compile Include="TailTests.fs" />
+    <Compile Include="ConsTests.fs" />
     <Compile Include="RevTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
