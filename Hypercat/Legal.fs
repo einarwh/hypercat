@@ -185,7 +185,7 @@ let preconds : (string * (Cat -> bool)) list =
       ("xor", twoBools)
       ("concat", twoBlocks)
       ("head", nonEmptyListOrString)
-      ("tail", nonEmptyBlock)
+      ("tail", nonEmptyListOrString)
       ("cons", consPrecond)
       ("rev", oneListOrString)
       ("map", mapPrecond)

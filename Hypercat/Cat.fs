@@ -198,16 +198,15 @@ let tail (stack : Cat) : Cat =
    match stack with 
     | a :: rest -> 
         match a with 
+        | StringItem str ->
+            if str = "" then 
+                raise (Exception "Empty string has no tail")
+            else 
+                StringItem (str.Substring(1)) :: rest
         | ListItem block ->
             match block with 
-            | _ :: t -> 
-                (ListItem t) :: rest 
-            | _ -> raise (StackUnderflowError "tail")
-        | ProcItem block ->
-            match block with 
-            | _ :: t -> 
-                (ProcItem t) :: rest 
-            | _ -> raise (StackUnderflowError "tail")
+            | [] -> raise (Exception "Empty list has no tail")
+            | _ :: t -> (ListItem t) :: rest 
         | _ -> raise (TypeError "tail")
     | _ -> raise (StackUnderflowError "tail")
 
