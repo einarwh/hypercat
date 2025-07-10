@@ -5,13 +5,13 @@ open Xunit
 open Legal
 open Cat
 
-let testAdd n1 n2 sum = 
+let testAdd n1 n2 expected = 
     match pushInput (IntInput n1) [] with 
     | Extension [ IntItem n1 ] ->
         match pushInput (IntInput n2) [ IntItem n1 ] with 
         | Extension [ IntItem n2; IntItem n1 ] ->
             match pushInput (NameInput "add") [ IntItem n2; IntItem n1 ] with 
-            | Reduction [ IntItem sum ] -> Assert.True(true)
+            | Reduction [ IntItem actual ] -> Assert.Equal(expected, actual)
             | _ -> failwith "??"
         | _ -> failwith "??"
     | _ -> failwith "??"

@@ -8,10 +8,13 @@
 
   <ItemGroup>
     <Compile Include="PushIntTests.fs" />
-    <Compile Include="AddTests.fs" />
-    <Compile Include="PopTests.fs" />
-    <Compile Include="DupTests.fs" />
     <Compile Include="SwapTests.fs" />
+    <Compile Include="DupTests.fs" />
+    <Compile Include="PopTests.fs" />
+    <Compile Include="AddTests.fs" />
+    <Compile Include="SubTests.fs" />
+    <Compile Include="MulTests.fs" />
+    <Compile Include="DivTests.fs" />
     <Compile Include="SuccTests.fs" />
     <Compile Include="PredTests.fs" />
     <Compile Include="Program.fs" />
