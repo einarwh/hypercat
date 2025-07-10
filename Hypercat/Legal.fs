@@ -58,7 +58,7 @@ let rec execPrecond stack =
     | ProcItem _ :: _ -> true 
     | _ -> false
 
-let rec flattenPrecond stack = 
+let rec oneList stack = 
     match stack with 
     | ListItem _ :: _ -> true 
     | _ -> false
@@ -179,7 +179,8 @@ let preconds : (string * (Cat -> bool)) list =
       ("split", twoStrings)
       ("int", oneString)
       ("exec", execPrecond)
-      ("flatten", flattenPrecond)
+      ("flatten", oneList)
+      ("sort", oneList)
       ("if", ifPrecond)
       ("ifelse", ifelsePrecond)
       ("proc", noPrecond)

@@ -224,6 +224,14 @@ let rev (stack : Cat) : Cat =
         | _ -> raise (TypeError "rev")
     | _ -> raise (StackUnderflowError "rev")
 
+let sort (stack : Cat) : Cat = 
+   match stack with 
+    | a :: rest -> 
+        match a with 
+        | ListItem block -> (ListItem (List.sort block)) :: rest
+        | _ -> raise (TypeError "sort")
+    | _ -> raise (StackUnderflowError "sort")
+
 let cons (stack : Cat) : Cat = 
    printfn "cons %A" stack 
    match stack with 
@@ -375,6 +383,7 @@ let ops : (string * (Cat -> Cat)) list =
       ("tail", tail)
       ("cons", cons)
       ("flatten", flatten)
+      ("sort", sort)
       ("rev", rev)
       ("map", map)
       ("reduce", reduce)

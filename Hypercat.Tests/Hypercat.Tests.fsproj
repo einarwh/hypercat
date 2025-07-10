@@ -38,6 +38,7 @@
     <Compile Include="LenTests.fs" />
     <Compile Include="ConcatTests.fs" />
     <Compile Include="FlattenTests.fs" />
+    <Compile Include="SortTests.fs" />
     <Compile Include="MapTests.fs" />
     <Compile Include="ReduceTests.fs" />
     <Compile Include="RevTests.fs" />
