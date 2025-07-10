@@ -174,6 +174,7 @@ let concat (stack : Cat) : Cat =
     | a :: b :: rest -> 
         match (a, b) with 
         | ListItem l1, ListItem l2 -> ListItem (l1 @ l2) :: rest
+        | StringItem s1, StringItem s2 -> StringItem (s1 + s2) :: rest
         | ProcItem p1, ProcItem p2 -> ProcItem (p1 @ p2) :: rest
         | _ -> raise (TypeError "concat")
     | _ -> raise (StackUnderflowError "concat")

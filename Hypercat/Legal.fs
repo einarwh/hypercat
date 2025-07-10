@@ -102,6 +102,12 @@ let rec oneListOrString stack =
     | StringItem _ :: _ -> true 
     | _ -> false
 
+let rec twoListsOrStrings stack = 
+    match stack with 
+    | ListItem _ :: ListItem _ :: _ -> true 
+    | StringItem _ :: StringItem _ :: _ -> true 
+    | _ -> false
+
 let rec nonEmptyBlock stack = 
     match stack with 
     | ListItem (_ :: _) :: _ -> true 
@@ -183,7 +189,7 @@ let preconds : (string * (Cat -> bool)) list =
       ("and", twoBools)
       ("or", twoBools)
       ("xor", twoBools)
-      ("concat", twoBlocks)
+      ("concat", twoListsOrStrings)
       ("head", nonEmptyListOrString)
       ("tail", nonEmptyListOrString)
       ("cons", consPrecond)
