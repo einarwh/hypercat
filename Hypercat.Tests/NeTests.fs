@@ -6,7 +6,6 @@ open Legal
 open Cat
 
 let testNe (originalStack : Cat) (expectedResult : bool) = 
-    printfn "originalStack %A -> %b" originalStack expectedResult
     match pushInput (NameInput "ne") originalStack with 
     | Reduction (BoolItem actualResult :: _) ->
         Assert.Equal(expectedResult, actualResult)

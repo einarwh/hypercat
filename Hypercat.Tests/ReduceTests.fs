@@ -8,9 +8,6 @@ open Cat
 let testReduce (originalStack : Cat) (expectedStack : Cat) = 
     match pushInput (NameInput "reduce") originalStack with 
     | Reduction actualStack ->
-        // if actualStack <> expectedStack then 
-        //     actualStack |> List.map (sprintf "%A") |> String.concat ", " |> sprintf "[%s]" |> printfn "%s"
-        //     expectedStack |> List.map (sprintf "%A") |> String.concat ", " |> sprintf "[%s]" |> printfn "%s"
         Assert.Equal<Cat>(expectedStack, actualStack)
     | result -> 
         failwith <| sprintf "unexpected result %A" result

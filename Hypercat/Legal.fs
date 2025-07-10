@@ -112,7 +112,11 @@ let rec reducePrecond stack =
 let rec consPrecond stack = 
     match stack with 
     | ListItem _ :: _ :: _ -> true 
-    | ProcItem _ :: _ :: _ -> true 
+    | _ -> false
+
+let rec takePrecond stack = 
+    match stack with 
+    | ListItem _ :: IntItem _ :: _ -> true 
     | _ -> false
 
 let rec ifPrecond stack = 
@@ -172,6 +176,7 @@ let preconds : (string * (Cat -> bool)) list =
       ("len", oneListOrString)
       ("head", nonEmptyListOrString)
       ("tail", nonEmptyListOrString)
+      ("take", takePrecond)
       ("cons", consPrecond)
       ("rev", oneListOrString)
       ("map", mapPrecond)

@@ -35,6 +35,7 @@
     <Compile Include="HeadTests.fs" />
     <Compile Include="TailTests.fs" />
     <Compile Include="ConsTests.fs" />
+    <Compile Include="TakeTests.fs" />
     <Compile Include="LenTests.fs" />
     <Compile Include="ConcatTests.fs" />
     <Compile Include="FlattenTests.fs" />

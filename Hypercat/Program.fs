@@ -5,6 +5,8 @@ open System.Text.RegularExpressions
 open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.Hosting
 open Microsoft.AspNetCore.Http
+open Microsoft.AspNetCore.Hosting
+open Microsoft.AspNetCore.Server.Kestrel.Core
 open Cat
 open Legal
 open View
@@ -15,7 +17,6 @@ let createOplink (url : string) name =
     result
 
 let toInput (element : string) : Input = 
-    printfn "element -> input %s" element
     match System.Int32.TryParse element with
     | true, n -> IntInput n 
     | _ -> 
@@ -226,6 +227,8 @@ let getHandler (ctx : HttpContext) : Task =
 [<EntryPoint>]
 let main args =
     let builder = WebApplication.CreateBuilder(args)
+    builder.WebHost.ConfigureKestrel(fun serverOptions -> serverOptions.Limits.MaxRequestLineSize <- 262144) |> ignore
+    
     let app = builder.Build()
     app.MapGet("/{**path}", Func<HttpContext, Task>(getHandler)) |> ignore
     app.Run()

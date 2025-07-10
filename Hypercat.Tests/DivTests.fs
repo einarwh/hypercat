@@ -6,7 +6,6 @@ open Legal
 open Cat
 
 let testDiv n1 n2 expected = 
-    printfn "testDiv %d %d %d" n1 n2 expected
     match pushInput (IntInput n1) [] with 
     | Extension [ IntItem n1 ] ->
         match pushInput (IntInput n2) [ IntItem n1 ] with 

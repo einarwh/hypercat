@@ -233,14 +233,22 @@ let sort (stack : Cat) : Cat =
     | _ -> raise (StackUnderflowError "sort")
 
 let cons (stack : Cat) : Cat = 
-   printfn "cons %A" stack 
    match stack with 
     | a :: b :: rest -> 
         match a with 
         | ListItem block -> (ListItem (b :: block)) :: rest
-        | ProcItem block -> (ProcItem (b :: block)) :: rest
         | _ -> raise (TypeError "cons")
     | _ -> raise (StackUnderflowError "cons")
+
+let take (stack : Cat) : Cat = 
+   match stack with 
+    | a :: b :: rest -> 
+        match (a, b) with 
+        | ListItem block, IntItem count -> 
+            let taken = block |> List.truncate count
+            ListItem taken :: rest
+        | _ -> raise (TypeError "take")
+    | _ -> raise (StackUnderflowError "take")
 
 let flatten (stack : Cat) : Cat = 
    match stack with 
@@ -250,16 +258,12 @@ let flatten (stack : Cat) : Cat =
         | _ -> raise (TypeError "flatten")
     | _ -> raise (StackUnderflowError "flatten")
 
-// let mapItem (codeBlock : CatItem list) (item : CatItem) : CatItem list = 
-//     [ NameItem "exec"; ProcItem codeBlock; item ]
-
 let executeMap (dataBlock : CatItem list) (codeBlock : CatItem list) : CatItem = 
     let rec fn (stack : CatItem list) (dataItems : CatItem list) = 
         match dataItems with 
         | [] -> stack
         | item :: rest -> 
             let added = NameItem "exec" :: ProcItem codeBlock :: item :: stack
-            printfn "added %A" added
             fn added rest
     let items = fn [] (dataBlock |> List.rev)
     ListItem items
@@ -270,7 +274,6 @@ let executeReduce (dataBlock : CatItem list) (codeBlock : CatItem list) : CatIte
         | [] -> stack
         | item :: rest -> 
             let reduced = NameItem "exec" :: ProcItem codeBlock :: item :: stack
-            printfn "reduced %A" reduced
             fn reduced rest
     match dataBlock with
     | [] -> raise (StackUnderflowError "reduce")
@@ -279,20 +282,16 @@ let executeReduce (dataBlock : CatItem list) (codeBlock : CatItem list) : CatIte
         result
 
 let map (stack : Cat) : Cat = 
-    printfn "map %A" stack
     match stack with 
     | a :: b :: rest -> 
         match (a, b) with 
         | ListItem dataBlock, ProcItem codeBlock -> 
-            // let emptyBlock = ProcItem []
-            // let resultBlock = dataBlock |> List.collect (fun item -> mapItem codeBlock item)
             let listItem = executeMap dataBlock codeBlock 
             listItem :: rest 
         | _ -> raise (TypeError "map")
     | _ -> raise (StackUnderflowError "map")
 
 let reduce (stack : Cat) : Cat = 
-    printfn "reduce %A" stack
     match stack with 
     | a :: b :: rest -> 
         match (a, b) with 
@@ -313,7 +312,6 @@ let zero (stack : Cat) : Cat =
     stack |> push (IntItem 0) 
 
 let succ (stack : Cat) : Cat = 
-    printfn "succ %A" stack
     match stack with 
     | a :: rest -> 
         match a with 
@@ -330,7 +328,6 @@ let pred (stack : Cat) : Cat =
     | _ -> raise (StackUnderflowError "pred")
 
 let split (stack : Cat) : Cat = 
-   printfn "split %A" stack 
    match stack with 
     | a :: b :: rest -> 
         match (a, b) with 
@@ -382,6 +379,7 @@ let ops : (string * (Cat -> Cat)) list =
       ("head", head)
       ("tail", tail)
       ("cons", cons)
+      ("take", take)
       ("flatten", flatten)
       ("sort", sort)
       ("rev", rev)
