@@ -334,7 +334,7 @@ let intOp (stack : Cat) : Cat =
         | StringItem str -> 
             match System.Int32.TryParse str with
             | true, n -> (IntItem n) :: rest 
-            | _ -> failwith "not an integer value"
+            | _ -> raise (Exception <| sprintf "%s is not an integer value" str)
         | _ -> raise (TypeError "int")
     | _ -> raise (StackUnderflowError "int")
 
