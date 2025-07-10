@@ -15,6 +15,9 @@
     <Compile Include="SubTests.fs" />
     <Compile Include="MulTests.fs" />
     <Compile Include="DivTests.fs" />
+    <Compile Include="TrueTests.fs" />
+    <Compile Include="FalseTests.fs" />
+    <Compile Include="ZeroTests.fs" />
     <Compile Include="SuccTests.fs" />
     <Compile Include="PredTests.fs" />
     <Compile Include="Program.fs" />
