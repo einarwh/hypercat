@@ -21,6 +21,7 @@
     <Compile Include="SuccTests.fs" />
     <Compile Include="PredTests.fs" />
     <Compile Include="NegTests.fs" />
+    <Compile Include="EqTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
