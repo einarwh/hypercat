@@ -161,10 +161,10 @@ let createInputDiv stack =
         h3 [] [ str "Input" ] 
         div [] [
             form [ attr "action" formActionTarget; attr "method" "POST" ] [
-                label [ attr "for" "number" ] [ str "Number" ]
                 input [ attr "type" "radio"; attr "id" "number"; attr "name" "type"; attr "value" "number" ]
-                label [ attr "for" "string" ] [ str "String" ]
+                label [ attr "for" "number" ] [ str "Number" ]
                 input [ attr "type" "radio"; attr "id" "string"; attr "name" "type"; attr "value" "string" ]
+                label [ attr "for" "string" ] [ str "String" ]
                 // label [ attr "for" "text" ] [ str "Text" ]
                 input [ attr "type" "text"; attr "id" "text"; attr "name" "text" ]
                 input [ attr "type" "submit"; attr "value" "push" ] ] ] ] 
