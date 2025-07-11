@@ -18,7 +18,7 @@ Mostly just click on links and see what happens.
 
 ## Advent of Code 2022, Day 1 Example
 
-If you would like to learn Hypercat by example, follow these instructions. It will solve the examples provided for day 1 of Advent of Code 2022. The approach should work for the full input as well, but you may need to use a browser that will allow you to increase the limit of HTTP redirects from something like 20 to something more like 1000. Also you may need patience.
+If you would like to learn Hypercat by example, follow these instructions. It will solve the examples provided for day 1 of Advent of Code 2022.
 
 - Copy the string `1000%A02000%A03000%A0%A04000%A0%A05000%A06000%A0%A07000%A08000%A09000%A0%A010000` into the textbox, select the String radio button, and click the 'push' button. You should see the string added to your stack (and your URL).
 - Repeat the process with the string `%A0%A0`.
