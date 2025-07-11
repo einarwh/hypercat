@@ -5,6 +5,8 @@ open Xunit
 open Legal
 open Cat
 
+// take count list 
+
 let testTake (originalStack : Cat) (expectedStack : Cat) = 
     match pushInput (NameInput "take") originalStack with 
     | Reduction actualStack ->
@@ -30,23 +32,23 @@ let ``Take with stack of just a list throws stack underflow error`` () =
 
 [<Fact>]
 let ``Take - take 0 elements from list of 2 elements`` () =
-    testTake [ ListItem [ StringItem "a"; StringItem "b" ]; IntItem 0 ] [ ListItem [] ]
+    testTake [ IntItem 0; ListItem [ StringItem "a"; StringItem "b" ] ] [ ListItem [] ]
 
 [<Fact>]
 let ``Take - take 1 element from list of 2 elements`` () =
-    testTake [ ListItem [ StringItem "a"; StringItem "b" ]; IntItem 1 ] [ ListItem [  StringItem "a" ] ]
+    testTake [ IntItem 1; ListItem [ StringItem "a"; StringItem "b" ] ] [ ListItem [  StringItem "a" ] ]
 
 [<Fact>]
 let ``Take - take 2 elements from list of 2 elements`` () =
-    testTake [ ListItem [ StringItem "a"; StringItem "b" ]; IntItem 2 ] [ ListItem [ StringItem "a"; StringItem "b" ] ]
+    testTake [ IntItem 2; ListItem [ StringItem "a"; StringItem "b" ] ] [ ListItem [ StringItem "a"; StringItem "b" ] ]
 
 [<Fact>]
 let ``Take - take 3 elements from list of 2 elements`` () =
-    testTake [ ListItem [ StringItem "a"; StringItem "b" ]; IntItem 3 ] [ ListItem [ StringItem "a"; StringItem "b" ] ]
+    testTake [ IntItem 3; ListItem [ StringItem "a"; StringItem "b" ] ] [ ListItem [ StringItem "a"; StringItem "b" ] ]
 
 [<Fact>]
 let ``Take with list and count inverted throws type error`` () =
-    let call = (fun () -> testTake [ IntItem 1; ListItem [] ] [])
+    let call = (fun () -> testTake [ ListItem []; IntItem 1 ] [])
     Assert.Throws<TypeError>(call)
 
 [<Fact>]
@@ -57,15 +59,15 @@ let ``Take on integer yields type error`` () =
     
 [<Fact>]
 let ``Take is legal given stack with list and integer`` () =
-    testTakeLegal [ ListItem []; IntItem 0 ] 
+    testTakeLegal [ IntItem 0; ListItem [] ] 
 
 [<Fact>]
 let ``Take is illegal given stack with list and bool`` () =
-    testTakeIllegal [ ListItem []; BoolItem false ] 
+    testTakeIllegal [ BoolItem false; ListItem [] ] 
 
 [<Fact>]
 let ``Take is illegal given stack with integer and list in wrong order`` () =
-    testTakeIllegal [ IntItem 0; ListItem [] ] 
+    testTakeIllegal [ ListItem []; IntItem 0 ] 
 
 [<Fact>]
 let ``Take is illegal given just list`` () =

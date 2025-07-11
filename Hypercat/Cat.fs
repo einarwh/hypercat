@@ -280,7 +280,7 @@ let take (stack : Cat) : Cat =
    match stack with 
     | a :: b :: rest -> 
         match (a, b) with 
-        | ListItem block, IntItem count -> 
+        | IntItem count, ListItem block -> 
             let taken = block |> List.truncate count
             ListItem taken :: rest
         | _ -> raise (TypeError "take")

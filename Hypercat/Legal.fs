@@ -114,9 +114,9 @@ let consPrecond stack =
     | _ :: ListItem _ :: _ -> true 
     | _ -> false
 
-let rec takePrecond stack = 
+let takePrecond stack = 
     match stack with 
-    | ListItem _ :: IntItem _ :: _ -> true 
+    | IntItem _ :: ListItem _ :: _ -> true 
     | _ -> false
 
 let rec ifPrecond stack = 
