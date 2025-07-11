@@ -282,8 +282,8 @@ let main args =
     let builder = WebApplication.CreateBuilder(args)
     let conf (serverOptions : KestrelServerOptions) =    
         serverOptions.Limits.MaxRequestLineSize <- 262144
-        serverOptions.Limits.MaxRequestHeadersTotalSize <- 2097152
-        serverOptions.Limits.MaxRequestBufferSize <- 2097152
+        serverOptions.Limits.MaxRequestHeadersTotalSize <- 33554432
+        serverOptions.Limits.MaxRequestBufferSize <- 33554432
     builder.WebHost.ConfigureKestrel(conf) |> ignore
     let app = builder.Build()
     app.MapGet("/{**path}", Func<HttpContext, Task>(getHandler)) |> ignore
