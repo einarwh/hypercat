@@ -35,15 +35,15 @@ let ``Split on stack with integer throws type error`` () =
 
 [<Fact>]
 let ``Split "foo bar" on " " yields list of "foo" and "bar" `` () =
-    testSplit [ StringItem "foo bar"; StringItem " " ] [ ListItem [ StringItem "foo"; StringItem "bar" ] ]
+    testSplit [ StringItem " "; StringItem "foo bar" ] [ ListItem [ StringItem "foo"; StringItem "bar" ] ]
 
 [<Fact>]
 let ``Split "foo bar quux" on " " yields list of "foo", "bar", "quux" `` () =
-    testSplit [ StringItem "foo bar quux"; StringItem " " ] [ ListItem [ StringItem "foo"; StringItem "bar"; StringItem "quux" ] ]
+    testSplit [ StringItem " "; StringItem "foo bar quux" ] [ ListItem [ StringItem "foo"; StringItem "bar"; StringItem "quux" ] ]
 
 [<Fact>]
 let ``Split "ouroboros" on "o" yields list of "", "ur", "b", "r", "s"`` () =
-    testSplit [ StringItem "ouroboros"; StringItem "o" ] [ ListItem [ StringItem ""; StringItem "ur"; StringItem "b"; StringItem "r"; StringItem "s" ] ]
+    testSplit [ StringItem "o"; StringItem "ouroboros"] [ ListItem [ StringItem ""; StringItem "ur"; StringItem "b"; StringItem "r"; StringItem "s" ] ]
 
 [<Fact>]
 let ``Split is legal given at least two strings`` () =

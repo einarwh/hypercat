@@ -367,7 +367,7 @@ let split (stack : Cat) : Cat =
    match stack with 
     | a :: b :: rest -> 
         match (a, b) with 
-        | StringItem str, StringItem sep -> 
+        | StringItem sep, StringItem str -> 
             let ss = str.Split(sep) |> Seq.toList |> List.map (fun s -> StringItem s)
             (ListItem ss) :: rest
         | _ -> raise (TypeError "split")
