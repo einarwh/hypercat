@@ -153,6 +153,22 @@ let rec toStackString (depth : int) (elements : string list) (items : CatItem li
         | ProcMarker -> 
             toStackString depth ("-proc-" :: elements) rest
 
+let createInputDiv stack = 
+    let url = toLocationUrl stack []
+    let formActionTarget = url
+
+    div [] [ 
+        h3 [] [ str "Input" ] 
+        div [] [
+            form [ attr "action" formActionTarget; attr "method" "POST" ] [
+                label [ attr "for" "number" ] [ str "Number" ]
+                input [ attr "type" "radio"; attr "id" "number"; attr "name" "type"; attr "value" "number" ]
+                label [ attr "for" "string" ] [ str "String" ]
+                input [ attr "type" "radio"; attr "id" "string"; attr "name" "type"; attr "value" "string" ]
+                // label [ attr "for" "text" ] [ str "Text" ]
+                input [ attr "type" "text"; attr "id" "text"; attr "name" "text" ]
+                input [ attr "type" "submit"; attr "value" "push" ] ] ] ] 
+
 let createStackDiv stack =
     let stackString = toStackString 0 [] stack
     div [ attr "style" "width:300px;overflow:auto" ] [
@@ -164,6 +180,7 @@ let createStackDiv stack =
 
 let createDoc stack = 
     let operationsDiv = createOperationsDiv stack
+    let inputDiv = createInputDiv stack
     let stackDiv = createStackDiv stack
 
     let doc = 
@@ -183,6 +200,7 @@ let createDoc stack =
                         tr [ attr "valign" "top" ] [
                             td [ attr "width" "200" ] [
                                 operationsDiv
+                                inputDiv
                             ]
                             td [ attr "width" "300" ] [
                                 stackDiv
@@ -199,20 +217,25 @@ let getHandler (ctx : HttpContext) : Task =
     let nonNullPath = if routePath = null then "" else routePath
     let elements = nonNullPath.Split("/") |> Array.toList |> List.filter (fun s -> s.Length > 0)
     try 
-        let inputs = toInputList elements
-        match inputs |> applyInputs [] with 
-        | (Reduction st, inputsLeft) -> 
-            let url = toLocationUrl st inputsLeft
-            ctx.Response.StatusCode <- 302
-            ctx.Response.Headers.Location <- url
-            Task.CompletedTask
-        | (Extension st, []) -> 
-            let doc = createDoc st 
-            let str = RenderView.AsString.htmlDocument doc
-            ctx.Response.StatusCode <- 200
-            ctx.Response.WriteAsync(str)
-        | _ -> 
-            failwith "?"
+        if List.contains "clear" elements then 
+            ctx.Response.Redirect("/", false)
+            Task.CompletedTask;
+        else
+            let inputs = toInputList elements
+            printfn "inputs %A" inputs
+            match inputs |> applyInputs [] with 
+            | (Reduction st, inputsLeft) -> 
+                let url = toLocationUrl st inputsLeft
+                ctx.Response.StatusCode <- 302
+                ctx.Response.Headers.Location <- url
+                Task.CompletedTask
+            | (Extension st, []) -> 
+                let doc = createDoc st 
+                let str = RenderView.AsString.htmlDocument doc
+                ctx.Response.StatusCode <- 200
+                ctx.Response.WriteAsync(str)
+            | _ -> 
+                failwith "?"
     with 
     | StackUnderflowError opname -> 
         ctx.Response.StatusCode <- 400
@@ -224,6 +247,38 @@ let getHandler (ctx : HttpContext) : Task =
         ctx.Response.StatusCode <- 500
         ctx.Response.WriteAsync(ex.Message)
 
+let postHandler (ctx : HttpContext) : Task = 
+    match ctx.Request.HasFormContentType with
+    | false -> 
+        ctx.Response.StatusCode <- 400
+        ctx.Response.WriteAsync("Missing form!")
+    | true ->
+        printfn "%A" ctx.Request.Form
+        match ctx.Request.Form.TryGetValue("text"), ctx.Request.Form.TryGetValue("type") with 
+        | (true, valuesText), (true, valuesType) ->
+            let textStr = valuesText.[0]
+            let typeStr = valuesType.[0]
+            let pathStr = ctx.Request.Path.Value 
+            try 
+                let itemStr = 
+                    if typeStr = "string" then 
+                        sprintf "\"%s\"" textStr 
+                    else 
+                        let n = System.Int32.Parse textStr
+                        n.ToString()
+                let location = 
+                    if pathStr.EndsWith("/") then sprintf "%s%s" pathStr itemStr 
+                    else sprintf "%s/%s" pathStr itemStr
+                ctx.Response.Redirect(location, false)
+                Task.CompletedTask;
+            with 
+            | ex -> 
+                ctx.Response.StatusCode <- 400
+                ctx.Response.WriteAsync(sprintf "%s" ex.Message)
+        | _ ->
+            ctx.Response.StatusCode <- 400
+            ctx.Response.WriteAsync("Missing input!")
+
 [<EntryPoint>]
 let main args =
     let builder = WebApplication.CreateBuilder(args)
@@ -231,5 +286,6 @@ let main args =
     
     let app = builder.Build()
     app.MapGet("/{**path}", Func<HttpContext, Task>(getHandler)) |> ignore
+    app.MapPost("/{**path}", Func<HttpContext, Task>(postHandler)) |> ignore
     app.Run()
     0 
