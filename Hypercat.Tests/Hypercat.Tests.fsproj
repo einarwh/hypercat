@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <Compile Include="PushIntTests.fs" />
+    <Compile Include="PushProcTests.fs" />
     <Compile Include="ListTests.fs" />
     <Compile Include="SwapTests.fs" />
     <Compile Include="RollTests.fs" />
