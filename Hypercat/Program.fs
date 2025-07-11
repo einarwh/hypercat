@@ -252,7 +252,6 @@ let postHandler (ctx : HttpContext) : Task =
         ctx.Response.StatusCode <- 400
         ctx.Response.WriteAsync("Missing form!")
     | true ->
-        printfn "%A" ctx.Request.Form
         match ctx.Request.Form.TryGetValue("text"), ctx.Request.Form.TryGetValue("type") with 
         | (true, valuesText), (true, valuesType) ->
             let textStr = valuesText.[0]
