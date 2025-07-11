@@ -5,6 +5,8 @@ open Xunit
 open Legal
 open Cat
 
+// "cons" item list 
+
 let testCons (originalStack : Cat) (expectedStack : Cat) = 
     match pushInput (NameInput "cons") originalStack with 
     | Reduction actualStack ->
@@ -30,7 +32,7 @@ let ``Cons with stack of just a list throws stack underflow error`` () =
 
 [<Fact>]
 let ``Cons - adding string to empty list`` () =
-    testCons [ ListItem []; StringItem "foo" ] [ ListItem [ StringItem "foo" ] ]
+    testCons [ StringItem "foo"; ListItem [] ] [ ListItem [ StringItem "foo" ] ]
 
 [<Fact>]
 let ``Cons - adding empty list to empty list`` () =
@@ -38,15 +40,16 @@ let ``Cons - adding empty list to empty list`` () =
 
 [<Fact>]
 let ``Cons - adding string to non-empty list`` () =
-    testCons [ ListItem [ BoolItem true ]; StringItem "cat" ] [ ListItem [ StringItem "cat"; BoolItem true ] ]
+    testCons [ StringItem "cat"; ListItem [ BoolItem true ] ] [ ListItem [ StringItem "cat"; BoolItem true ] ]
 
 [<Fact>]
 let ``Cons - adding empty list to non-empty list`` () =
-    testCons [ ListItem [ IntItem 0 ]; ListItem [] ] [ ListItem [ ListItem []; IntItem 0 ] ]
+    testCons [ ListItem []; ListItem [ IntItem 0 ] ] [ ListItem [ ListItem []; IntItem 0 ] ]
 
 [<Fact>]
 let ``Cons with list and string inverted throws type error`` () =
-    let call = (fun () -> testCons [ StringItem "foo"; ListItem [] ] [])
+    let stack = [ ListItem []; StringItem "foo" ]
+    let call = (fun () -> testCons stack [])
     Assert.Throws<TypeError>(call)
 
 [<Fact>]
@@ -57,11 +60,11 @@ let ``Cons on integer yields type error`` () =
     
 [<Fact>]
 let ``Cons is legal given stack with list and bool`` () =
-    testConsLegal [ ListItem []; BoolItem true ] 
+    testConsLegal [ BoolItem true; ListItem [] ] 
 
 [<Fact>]
 let ``Cons is legal given stack with list and string`` () =
-    testConsLegal [ ListItem []; StringItem "cat" ] 
+    testConsLegal [ StringItem "cat"; ListItem [] ] 
 
 [<Fact>]
 let ``Cons is legal given stack with list and list`` () =
@@ -69,7 +72,7 @@ let ``Cons is legal given stack with list and list`` () =
 
 [<Fact>]
 let ``Cons is illegal when list and item are in the wrong order`` () =
-    testConsIllegal [ StringItem "cat"; ListItem [] ] 
+    testConsIllegal [ ListItem []; StringItem "cat" ] 
 
 [<Fact>]
 let ``Cons is illegal given empty stack`` () =

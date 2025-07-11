@@ -109,9 +109,9 @@ let rec reducePrecond stack =
     | ListItem _ :: ProcItem _ :: _ -> true 
     | _ -> false
 
-let rec consPrecond stack = 
+let consPrecond stack = 
     match stack with 
-    | ListItem _ :: _ :: _ -> true 
+    | _ :: ListItem _ :: _ -> true 
     | _ -> false
 
 let rec takePrecond stack = 

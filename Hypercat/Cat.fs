@@ -271,8 +271,8 @@ let sort (stack : Cat) : Cat =
 let cons (stack : Cat) : Cat = 
    match stack with 
     | a :: b :: rest -> 
-        match a with 
-        | ListItem block -> (ListItem (b :: block)) :: rest
+        match b with 
+        | ListItem block -> (ListItem (a :: block)) :: rest
         | _ -> raise (TypeError "cons")
     | _ -> raise (StackUnderflowError "cons")
 
