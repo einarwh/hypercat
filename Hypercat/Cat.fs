@@ -321,7 +321,7 @@ let map (stack : Cat) : Cat =
     match stack with 
     | a :: b :: rest -> 
         match (a, b) with 
-        | ListItem dataBlock, ProcItem codeBlock -> 
+        | ProcItem codeBlock, ListItem dataBlock -> 
             let listItem = executeMap dataBlock codeBlock 
             listItem :: rest 
         | _ -> raise (TypeError "map")

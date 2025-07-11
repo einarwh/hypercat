@@ -5,6 +5,8 @@ open Xunit
 open Legal
 open Cat
 
+// "map" proc list 
+
 let testMap (originalStack : Cat) (expectedStack : Cat) = 
     match pushInput (NameInput "map") originalStack with 
     | Reduction actualStack ->
@@ -41,19 +43,19 @@ let ``Map on stack with two procs throws type error`` () =
 [<Fact>]
 let ``Map over an empty list gives an empty list`` () =
     testMap 
-        [ ListItem []; ProcItem [ NameItem "succ" ] ] 
+        [ ProcItem [ NameItem "succ" ]; ListItem [] ] 
         [ ListItem [] ]
 
 [<Fact>]
 let ``Map with an empty proc`` () =
     testMap 
-        [ ListItem [ IntItem 0 ]; ProcItem [] ] 
+        [ ProcItem []; ListItem [ IntItem 0 ] ] 
         [ ListItem [ NameItem "exec"; ProcItem []; IntItem 0 ] ]
 
 [<Fact>]
 let ``Map with non-empty list and non-empty proc`` () =
     testMap 
-        [ ListItem [ IntItem 1; IntItem 2; IntItem 3 ]; ProcItem [ NameItem "succ" ] ]     
+        [ ProcItem [ NameItem "succ" ]; ListItem [ IntItem 1; IntItem 2; IntItem 3 ] ]
         [ ListItem [ NameItem "exec"
                      ProcItem [ NameItem "succ" ]
                      IntItem 1 
@@ -66,11 +68,11 @@ let ``Map with non-empty list and non-empty proc`` () =
 
 [<Fact>]
 let ``Map is legal given stack with list and proc`` () =
-    testMapLegal [ ListItem []; ProcItem [] ] 
+    testMapLegal [ ProcItem []; ListItem [] ] 
 
 [<Fact>]
 let ``Map is illegal given stack with list and proc in the wrong order`` () =
-    testMapIllegal [ ProcItem []; ListItem [] ] 
+    testMapIllegal [ ListItem []; ProcItem [] ] 
 
 [<Fact>]
 let ``Map is illegal given stack with just a list`` () =

@@ -101,7 +101,7 @@ let rec twoBlocks stack =
 
 let rec mapPrecond stack = 
     match stack with 
-    | ListItem _ :: ProcItem _ :: _ -> true 
+    | ProcItem _ :: ListItem _ :: _ -> true 
     | _ -> false
 
 let rec reducePrecond stack = 
