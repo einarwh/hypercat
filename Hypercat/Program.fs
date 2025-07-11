@@ -222,7 +222,6 @@ let getHandler (ctx : HttpContext) : Task =
             Task.CompletedTask;
         else
             let inputs = toInputList elements
-            printfn "inputs %A" inputs
             match inputs |> applyInputs [] with 
             | (Reduction st, inputsLeft) -> 
                 let url = toLocationUrl st inputsLeft
