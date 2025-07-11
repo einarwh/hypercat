@@ -281,7 +281,7 @@ let postHandler (ctx : HttpContext) : Task =
 let main args =
     let builder = WebApplication.CreateBuilder(args)
     let conf (serverOptions : KestrelServerOptions) =    
-        serverOptions.Limits.MaxRequestLineSize <- 262144
+        serverOptions.Limits.MaxRequestLineSize <- 4194304
         serverOptions.Limits.MaxRequestHeadersTotalSize <- 33554432
         serverOptions.Limits.MaxRequestBufferSize <- 33554432
     builder.WebHost.ConfigureKestrel(conf) |> ignore
