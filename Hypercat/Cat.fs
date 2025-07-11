@@ -305,6 +305,7 @@ let executeMap (dataBlock : CatItem list) (codeBlock : CatItem list) : CatItem =
     ListItem items
 
 let executeReduce (dataBlock : CatItem list) (codeBlock : CatItem list) : CatItem list = 
+    // TODO: Make sure that reduce reduces to a single item!
     let rec fn (stack : CatItem list) (dataItems : CatItem list) = 
         match dataItems with 
         | [] -> stack
@@ -331,8 +332,7 @@ let reduce (stack : Cat) : Cat =
     match stack with 
     | a :: b :: rest -> 
         match (a, b) with 
-        | ListItem dataBlock, ProcItem codeBlock -> 
-            // let emptyBlock = ProcItem []
+        | ProcItem codeBlock, ListItem dataBlock -> 
             let block = executeReduce dataBlock codeBlock 
             block @ rest 
         | _ -> raise (TypeError "map")

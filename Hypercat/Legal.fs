@@ -106,7 +106,7 @@ let rec mapPrecond stack =
 
 let rec reducePrecond stack = 
     match stack with 
-    | ListItem _ :: ProcItem _ :: _ -> true 
+    | ProcItem _ :: ListItem (_ :: _) :: _ -> true 
     | _ -> false
 
 let consPrecond stack = 

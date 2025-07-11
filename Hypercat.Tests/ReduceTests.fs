@@ -5,6 +5,8 @@ open Xunit
 open Legal
 open Cat
 
+// "reduce" proc list 
+
 let testReduce (originalStack : Cat) (expectedStack : Cat) = 
     match pushInput (NameInput "reduce") originalStack with 
     | Reduction actualStack ->
@@ -40,19 +42,19 @@ let ``Reduce on stack with two procs throws type error`` () =
 
 [<Fact>]
 let ``Reduce over an empty list throws stack underflow error`` () =
-    let call = (fun () -> testReduce [ ListItem []; ProcItem [] ] [])
+    let call = (fun () -> testReduce [ ProcItem []; ListItem [] ] [])
     Assert.Throws<StackUnderflowError>(call)
 
 [<Fact>]
 let ``Reduce with a list with one item`` () =
     testReduce 
-        [ ListItem [ IntItem 0 ]; ProcItem [] ] 
+        [ ProcItem []; ListItem [ IntItem 0 ]] 
         [ IntItem 0 ]
 
 [<Fact>]
 let ``Reduce with non-empty list and non-empty proc`` () =
     testReduce 
-        [ ListItem [ IntItem 1; IntItem 2; IntItem 3 ]; ProcItem [ NameItem "add" ] ]
+        [ ProcItem [ NameItem "add" ]; ListItem [ IntItem 1; IntItem 2; IntItem 3 ] ]
         [ NameItem "exec"
           ProcItem [ NameItem "add" ]
           IntItem 3 
@@ -62,12 +64,16 @@ let ``Reduce with non-empty list and non-empty proc`` () =
           IntItem 1 ]
 
 [<Fact>]
-let ``Reduce is legal given stack with list and proc`` () =
-    testReduceLegal [ ListItem []; ProcItem [] ] 
+let ``Reduce is legal if list is non-empty`` () =
+    testReduceLegal [ ProcItem []; ListItem [ IntItem 0 ] ] 
+
+[<Fact>]
+let ``Reduce is illegal if list is empty`` () =
+    testReduceIllegal [ ProcItem []; ListItem [] ] 
 
 [<Fact>]
 let ``Reduce is illegal given stack with list and proc in the wrong order`` () =
-    testReduceIllegal [ ProcItem []; ListItem [] ] 
+    testReduceIllegal [ ListItem []; ProcItem [] ] 
 
 [<Fact>]
 let ``Reduce is illegal given stack with just a list`` () =
