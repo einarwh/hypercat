@@ -151,6 +151,7 @@ let rec containsAnyMarker (stack : Cat) =
 let preconds : (string * (Cat -> bool)) list = 
     [ ("clear", noPrecond)
       ("swap", twoArgs)
+      ("roll", twoInts)
       ("dup", oneArg)
       ("pop", oneArg)
       ("drop", containsProcMarker)

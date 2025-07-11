@@ -10,6 +10,7 @@
     <Compile Include="PushIntTests.fs" />
     <Compile Include="ListTests.fs" />
     <Compile Include="SwapTests.fs" />
+    <Compile Include="RollTests.fs" />
     <Compile Include="DupTests.fs" />
     <Compile Include="PopTests.fs" />
     <Compile Include="AddTests.fs" />

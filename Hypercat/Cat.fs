@@ -28,6 +28,42 @@ let swap (stack : Cat) : Cat =
     | a :: b :: rest -> b :: a :: rest 
     | _ -> raise (StackUnderflowError "swap")
 
+let executeStackRoll (steps : int) (itemCount : int) (stack : Cat) = 
+    let rec toPositiveSteps (steps : int) = 
+        if steps < 0 then 
+            toPositiveSteps (steps + itemCount)
+        else 
+            steps
+    let rec getItems (items : CatItem list) (count : int) (st : Cat) = 
+        if count = 0 then 
+            (items |> List.rev, st)
+        else 
+            match st with 
+            | [] -> raise (StackUnderflowError "roll")
+            | it :: rest -> 
+                getItems (it :: items) (count - 1) rest 
+    let rec rollItems (steps : int) (items : CatItem list) = 
+        if steps = 0 then 
+            items 
+        else 
+            match items with 
+            | [] -> []
+            | it :: rest -> rollItems (steps - 1) (rest @ [ it ])
+    let posSteps = toPositiveSteps steps
+    let (items, st) = getItems [] itemCount stack 
+    let rolled = rollItems posSteps items 
+    rolled @ st
+
+let roll (stack : Cat) : Cat = 
+    match stack with 
+    | a :: b :: rest -> 
+        match (a, b) with 
+        | IntItem steps, IntItem itemCount -> 
+            executeStackRoll steps itemCount rest
+        | _, _ -> 
+            raise (TypeError "roll")
+    | _ -> raise (StackUnderflowError "swap")
+
 let dup (stack : Cat) : Cat = 
     match stack with 
     | a :: rest -> a :: a :: rest 
@@ -351,6 +387,7 @@ let intOp (stack : Cat) : Cat =
 let ops : (string * (Cat -> Cat)) list = 
     [ ("clear", fun _ -> [])
       ("swap", swap)
+      ("roll", roll)
       ("dup", dup)
       ("pop", pop)
       ("drop", drop)
